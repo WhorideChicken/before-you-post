@@ -18,6 +18,11 @@
   .pick { display: flex; gap: 12px; flex-wrap: wrap; }
   .pick label { flex: 1 1 240px; padding: 24px; border: 2px dashed var(--line); border-radius: 12px; text-align: center; cursor: pointer; background: var(--card); }
   .pick input { display: none; }
+  .samples { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (max-width: 520px) { .samples { grid-template-columns: repeat(2, 1fr); } }
+  .samples button { padding: 0; overflow: hidden; text-align: left; }
+  .samples img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+  .samples span { display: block; padding: 6px 8px; font-size: 14px; }
   button, a.btn { font: inherit; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; text-decoration: none; }
   a.btn.primary { display: inline-block; margin-top: 12px; background: var(--accent); border-color: var(--accent); color: #fff; }
   button:disabled { opacity: .5; cursor: wait; }
@@ -52,10 +57,21 @@
   <h1>Before You Post</h1>
   <p class="sub">A red-team agent attacks your photo the way a stranger would, then removes exactly what gives you away and attacks again to check.</p>
 
-  <div class="pick">
-    <label><input id="photo" type="file" accept="image/*"><strong>Choose a photo</strong></label>
-    <button id="sample">Try a sample photo</button>
-  </div>
+  <h2>Try a sample</h2>
+  <div class="samples" id="samples"></div>
+  <p class="lvl">Samples replay a recorded run of the real agent, sped up. Every name and address in them is fictional.</p>
+
+  <h2>Or check your own photo</h2>
+  <p class="notice" id="live-off" hidden>Live runs on your own photos open with the hackathon submission. Until then,
+    the samples above replay real runs of the agent.</p>
+  <section id="own">
+    <div class="pick">
+      <label><input id="photo" type="file" accept="image/*"><strong>Choose a photo</strong></label>
+    </div>
+    <p class="lvl">Your photo is sent to the Meta Model API and never stored by this site. During the hackathon the API
+      runs on free credits, under which Meta may use submitted content for product improvement, so prefer staged photos
+      over real personal ones. Live runs are rate limited.</p>
+  </section>
 
   <p id="status" class="notice" hidden></p>
 
@@ -85,7 +101,11 @@ const CATEGORY = {
 };
 const LEVEL = ["Hidden", "Broad", "Narrowed", "Specific", "Exact"];
 const ACTION = { erase: "Erased", replace: "Replaced with a blank version", pixelate: "Pixelated", blur: "Blurred" };
-let original = null, result = null, firstGraph = null, t0 = 0, timer = 0, statusText = "";
+const SAMPLES = [
+  { name: "desk", label: "Home desk" }, { name: "front_door", label: "Front door" },
+  { name: "kr_parcel", label: "Korean parcel" }, { name: "inj_poster", label: "Prompt injection" },
+];
+let original = null, result = null, firstGraph = null, t0 = 0, timer = 0, statusText = "", eventTime = null;
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -106,7 +126,8 @@ function tick() {
 
 // Model output is untrusted (a photo can carry crafted text), so it only ever goes in via textContent.
 function log(head, items = []) {
-  const secs = Math.round((Date.now() - t0) / 1000);
+  // A replayed sample carries the real run's timestamps; show those, not the faster playback clock.
+  const secs = eventTime ?? Math.round((Date.now() - t0) / 1000);
   $("log").append(el("li", {}, el("div", { className: "head" }, head, el("span", { className: "time", textContent: `${secs}s` })),
     ...(items.length ? [el("ul", {}, ...items.map(t => el("li", { textContent: t })))] : [])));
 }
@@ -141,8 +162,10 @@ function meter(before, after) {
 }
 
 function handle(e) {
+  eventTime = e.t == null ? null : Math.round(e.t);
   if (e.type === "start") {
     const notes = [];
+    if (e.replay) notes.push(`Replaying a recorded run of the real agent, ${e.replay}x faster. Times below are from the real run.`);
     if (e.mock) notes.push("Demo mode: no Meta API key is set, so the attack is a placeholder.");
     if (e.metadata.gps) notes.push("This file has GPS location data. The safe copy never includes it.");
     if (notes.length) log("Before anything else", notes);
@@ -165,7 +188,7 @@ function handle(e) {
     log("Edits", e.edits.map(d => `${ACTION[d.action]}: ${d.label} (${d.mask === "sam" ? "SAM 3.1 mask" : "box mask"}, ${d.engine})`));
   } else if (e.type === "done") {
     clearInterval(timer);
-    result = $("download").href = "data:image/png;base64," + e.image;
+    result = $("download").href = e.image_url || "data:image/png;base64," + e.image;
     $("download").hidden = $("tabs").hidden = false;
     show("after");
     meter(e.before, e.after);
@@ -178,9 +201,12 @@ function handle(e) {
   }
 }
 
-async function start(file) {
-  if (!file) return;
-  original = URL.createObjectURL(file);
+function busy(on) {
+  document.querySelectorAll(".samples button, #photo").forEach(b => b.disabled = on);
+}
+
+async function begin(src, request) {
+  original = src;
   result = null;
   $("shown").src = original;
   $("log").replaceChildren();
@@ -188,14 +214,13 @@ async function start(file) {
   $("meter-title").hidden = $("meter-legend").hidden = $("download").hidden = $("tabs").hidden = true;
   document.querySelectorAll(".box").forEach(b => b.remove());
   $("view").hidden = false;
-  $("sample").disabled = true;
+  $("view").scrollIntoView({ behavior: "smooth" });
+  busy(true);
   t0 = Date.now();
-  status("Uploading");
+  status("Starting");
   timer = setInterval(tick, 1000);
-  const body = new FormData();
-  body.append("photo", file);
   try {
-    const r = await fetch("/api/run", { method: "POST", body });
+    const r = await request();
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
     const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
     let buf = "";
@@ -214,15 +239,27 @@ async function start(file) {
     status("Could not check this photo: " + err.message, true);
   } finally {
     clearInterval(timer);
-    $("sample").disabled = false;
+    busy(false);
   }
 }
 
-$("photo").onchange = e => start(e.target.files[0]);
-$("sample").onclick = async () => {
-  const blob = await (await fetch("samples/desk.jpg")).blob();
-  start(new File([blob], "desk.jpg", { type: blob.type }));
+$("photo").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const body = new FormData();
+  body.append("photo", file);
+  e.target.value = "";  // choosing the same file again should run again
+  begin(URL.createObjectURL(file), () => fetch("/api/run", { method: "POST", body }));
 };
+fetch("/api/status").then(r => r.json()).then(s => {
+  $("own").hidden = !s.live;
+  $("live-off").hidden = s.live;
+}).catch(() => {});
+$("samples").append(...SAMPLES.map(s => {
+  const b = el("button", {}, el("img", { src: `samples/${s.name}.jpg`, alt: "", loading: "lazy" }), el("span", { textContent: s.label }));
+  b.onclick = () => begin(`samples/${s.name}.jpg`, () => fetch(`/api/sample/${s.name}`));
+  return b;
+}));
 $("tabs").onclick = e => e.target.dataset.show && result && show(e.target.dataset.show);
 </script>
 </body>

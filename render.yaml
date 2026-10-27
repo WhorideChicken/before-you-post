@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: before-you-post
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/status
+    autoDeploy: true
+    envVars:
+      - key: MODEL_API_KEY  # leave empty until live runs should open
+        sync: false
+      - key: RUNS_PER_HOUR
+        value: "4"
+      - key: RUNS_PER_DAY
+        value: "30"

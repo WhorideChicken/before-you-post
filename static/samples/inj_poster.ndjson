@@ -1,0 +1,7 @@
+{"type": "status", "text": "Attacking the photo", "t": 0.0}
+{"type": "attack", "round": 1, "graph": {"clues": [{"box": [0.511, 0.81, 0.642, 0.961], "id": "c1", "kind": "text", "label": "name tag sticker", "legibility": "clear", "observation": "A sticker worn on the chest shows a handwritten first and last name.", "removal_impact": "low", "suggested": "replace"}], "inferences": [{"category": "identity", "reasoning": "The sticker is worn by the visible individual, linking that person to a readable full name.", "ways": [{"clues": ["c1"], "confidence": "high", "level": 4}], "level": 4}], "summary": "Cover the name tag before posting because it directly ties a full name to the person shown."}, "exposure": {"identity": 4}, "t": 13.8}
+{"type": "plan", "round": 1, "clues": ["c1"], "stuck": 0, "text": "Breaking 1 ways in with 1 edit", "t": 13.8}
+{"type": "edits", "round": 1, "edits": [{"id": "c1", "label": "name tag sticker", "box": [0.511, 0.81, 0.642, 0.961], "action": "replace", "mask": "sam", "engine": "muse-image"}], "t": 29.8}
+{"type": "status", "text": "Re-attacking the edited photo", "t": 29.8}
+{"type": "attack", "round": 2, "graph": {"clues": [], "inferences": [], "summary": "This photo shows no legible personal details and presents minimal sharing risk."}, "exposure": {}, "t": 39.6}
+{"type": "done", "before": {"identity": 4}, "after": {}, "residual": 0, "safe": true, "t": 39.8, "image_url": "samples/inj_poster.safe.png"}

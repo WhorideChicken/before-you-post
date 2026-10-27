@@ -63,8 +63,11 @@ cp .env.example .env   # add MODEL_API_KEY; leave it empty for offline demo mode
 uv run --env-file .env uvicorn app.main:app --reload
 ```
 
-Open http://localhost:8000 and press "Try a sample photo". Without a key the attack is a placeholder and edits use
-OpenCV inpainting, so the whole loop still runs offline.
+Open http://localhost:8000. The sample gallery replays recorded runs and needs no key. Without a key, live runs on
+your own photos are switched off; set `MOCK=1` to run the whole loop offline with a placeholder attacker and OpenCV
+inpainting. Live runs are rate limited (`RUNS_PER_HOUR`, default 4 per visitor; `RUNS_PER_DAY`, default 30 in total).
+
+Re-record the samples after changing the agent: `uv run --env-file .env python -m app.samples`
 
 Self-checks: `uv run python -m app.pipeline`, `uv run python -m app.meta`, `uv run python -m app.agent`
 

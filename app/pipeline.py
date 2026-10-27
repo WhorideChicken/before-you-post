@@ -8,7 +8,7 @@ from PIL import Image, ImageOps
 ACTIONS = ("erase", "pixelate", "blur", "keep")
 
 
-def load_image(data: bytes) -> tuple[np.ndarray, dict]:
+def load_image(data: bytes, max_side: int | None = None) -> tuple[np.ndarray, dict]:
     """Decode upload to an upright RGB array and report what the file's metadata leaks."""
     img = Image.open(io.BytesIO(data))
     exif = img.getexif()
@@ -16,6 +16,8 @@ def load_image(data: bytes) -> tuple[np.ndarray, dict]:
     metadata = {"gps": bool(exif.get_ifd(0x8825)), "device": device or None}
     # Phone photos are stored sideways with an orientation tag; boxes are relative to the upright image.
     img = ImageOps.exif_transpose(img).convert("RGB")
+    if max_side:
+        img.thumbnail((max_side, max_side), Image.LANCZOS)
     return np.asarray(img).copy(), metadata
 
 
