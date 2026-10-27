@@ -21,13 +21,16 @@
   .pick { display: flex; gap: 12px; flex-wrap: wrap; max-width: 560px; }
   .pick label { flex: 1 1 240px; padding: 24px; border: 2px dashed var(--line); border-radius: 12px; text-align: center; cursor: pointer; background: var(--card); }
   .pick input { display: none; }
-  .samples { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  @media (max-width: 520px) { .samples { grid-template-columns: repeat(2, 1fr); } }
+  .samples { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
   .samples button { padding: 0; overflow: hidden; text-align: left; }
-  .samples img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+  .samples .thumbs { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 3 / 2; }
+  .samples img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .samples .thumbs img:first-child:not(:only-child) { grid-row: span 2; }
+  .samples .thumbs img:only-child { grid-area: 1 / 1 / 3 / 3; }
   .samples span { display: block; padding: 6px 8px; font-size: 14px; }
   button, a.btn { font: inherit; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; text-decoration: none; }
-  a.btn.primary { display: inline-block; margin-top: 12px; background: var(--accent); border-color: var(--accent); color: #fff; }
+  a.btn.primary { display: inline-block; background: var(--accent); border-color: var(--accent); color: #fff; }
+  .downloads { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   button:disabled { opacity: .5; cursor: wait; }
   .notice { margin: 16px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
   .notice.warn { border-color: var(--warn); }
@@ -39,17 +42,23 @@
   @media (min-width: 900px) { .split { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; } }
   .tabs { display: flex; gap: 8px; margin-bottom: 8px; }
   .tabs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .stages { display: grid; gap: 8px; }
+  .stages.many { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
   .stage { position: relative; line-height: 0; }
   .stage img { width: 100%; border-radius: 8px; }
-  .badge { position: absolute; z-index: 2; top: 10px; right: 10px; padding: 4px 10px; border-radius: 999px; line-height: 1.5; font-size: 13px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .7); }
+  .badge, .alone { position: absolute; z-index: 2; padding: 4px 10px; border-radius: 999px; line-height: 1.5; font-size: 13px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .7); }
+  .badge { top: 10px; right: 10px; }
+  .alone { left: 8px; bottom: 8px; }
+  .many .badge, .many .alone { padding: 2px 8px; font-size: 11px; }
+  .many .badge { top: 6px; right: 6px; }
   .badge.ok { background: var(--ok); color: #04210f; }
   .box { position: absolute; border: 2px solid var(--c); border-radius: 4px; animation: pop .35s ease-out backwards; transition: opacity .2s, box-shadow .2s; }
   .box.fixed { --c: var(--ok); }
   .box span { position: absolute; top: -2px; left: -2px; padding: 0 6px; line-height: 1.5; font-size: 12px; font-weight: 700; color: #fff; background: var(--c); border-radius: 4px 0 4px 0; }
   .box.fixed span::after { content: " ✓"; }
-  .box.off, .stage.after .box:not(.hot) { display: none; }
+  .box.off, .stages.after .box:not(.hot) { display: none; }
   .box.hot { z-index: 1; box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 18px 4px var(--c); }
-  .stage.dim .box:not(.hot) { opacity: .3; }
+  .stages.dim .box:not(.hot) { opacity: .3; }
   @keyframes pop { from { transform: scale(1.4); opacity: 0; } }
   .scan { position: absolute; z-index: 1; inset: 0; overflow: hidden; border-radius: 8px; pointer-events: none; background: rgba(8, 102, 255, .08); }
   .scan::before { content: ""; position: absolute; left: 0; right: 0; top: -35%; height: 35%; background: linear-gradient(transparent, rgba(77, 148, 255, .45)); border-bottom: 2px solid #4d94ff; animation: sweep 2s linear infinite; }
@@ -88,8 +97,13 @@
   @keyframes wipe { from { width: 0; } }
   .why { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
   .via { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .chip { display: inline-flex; gap: 4px; align-items: center; padding: 2px 4px 2px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; }
+  .chip { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 2px 4px 2px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; }
+  .chip > span:not(.tag) { white-space: nowrap; }
+  .chip.across { border-radius: 12px; }
   .chip b { min-width: 1.5em; border-radius: 4px; text-align: center; font-size: 12px; background: var(--line); }
+  .chip.across { border-color: var(--accent); }
+  .chip i { font-style: normal; font-size: 12px; color: var(--accent); }
+  .together { margin: 8px 0 0; padding: 8px 10px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
   .stamp { position: absolute; top: 14px; right: 14px; padding: 2px 10px; border: 3px solid currentColor; border-radius: 6px; color: var(--warn);
            font: 800 15px/1.4 ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; transform: rotate(-8deg);
            animation: stamp .4s cubic-bezier(.3, 1.6, .6, 1) backwards; }
@@ -119,7 +133,8 @@
     the samples above replay real runs of the agent.</p>
   <section id="own">
     <div class="pick">
-      <label><input id="photo" type="file" accept="image/*"><strong>Choose a photo</strong></label>
+      <label><input id="photo" type="file" accept="image/*" multiple><strong>Choose a photo</strong><br>
+        <span class="lvl">or up to 6 from one account, checked together</span></label>
     </div>
     <p class="lvl">Your photo is sent to the Meta Model API and never stored by this site. During the hackathon the API
       runs on free credits, under which Meta may use submitted content for product improvement, so prefer staged photos
@@ -135,17 +150,14 @@
           <button data-show="before" aria-pressed="false">Before</button>
           <button data-show="after" aria-pressed="true">After</button>
         </div>
-        <div class="stage" id="stage">
-          <img id="shown" alt="Your photo">
-          <div class="scan" id="scan" hidden><span>Muse Spark is attacking</span></div>
-          <span class="badge" id="badge" hidden></span>
-        </div>
-        <a id="download" class="btn primary" download="safe-photo.png" hidden>Download safe copy</a>
+        <div class="stages" id="stages"></div>
+        <div class="downloads" id="downloads"></div>
       </div>
       <aside class="dossier" aria-live="polite">
         <header><small>Exposure report</small><strong>What a stranger learns</strong></header>
         <span class="stamp" id="stamp" hidden></span>
         <p class="summary" id="summary"></p>
+        <p class="together" id="together" hidden></p>
         <ol class="rows" id="rows"></ol>
         <p class="lvl">Redacted on purpose: the attacker reports what kind of detail shows, never the detail itself.
           Longer bars mean a more precise answer.</p>
@@ -172,11 +184,13 @@ const ACTION = { erase: "Erased", replace: "Replaced with a blank version", pixe
 const SAMPLES = [
   { name: "desk", label: "Home desk" }, { name: "front_door", label: "Front door" },
   { name: "kr_parcel", label: "Korean parcel" }, { name: "inj_poster", label: "Prompt injection" },
+  { name: "account", label: "One account, 3 posts", photos: 3 },
 ];
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
-let original = null, result = null, t0 = 0, timer = 0, statusText = "", eventTime = null;
-let boxes = new Map(), clueName = {}, linked = "";
+const stages = () => [...$("stages").children];
+let originals = [], results = [], touched = new Set(), t0 = 0, timer = 0, statusText = "", eventTime = null;
+let boxes = new Map(), clues = {}, linked = "";
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -207,7 +221,7 @@ function log(head, items = []) {
 function drawBoxes(g) {
   boxes.forEach(b => b.remove());
   boxes = new Map();
-  clueName = Object.fromEntries(g.clues.map((c, i) => [c.id, [i + 1, c.label]]));
+  clues = Object.fromEntries(g.clues.map((c, i) => [c.id, { ...c, n: i + 1, photo: c.photo ?? 0 }]));
   const worst = {};
   for (const inf of g.inferences) for (const w of inf.ways) for (const id of w.clues) worst[id] = Math.max(worst[id] || 0, w.level);
   g.clues.forEach((c, i) => {
@@ -218,9 +232,21 @@ function drawBoxes(g) {
       el("span", { textContent: i + 1 }));
     b.dataset.clue = c.id;
     b.dataset.level = level;
-    $("stage").append(b);
+    stages()[clues[c.id].photo]?.append(b);
     boxes.set(c.id, b);
   });
+}
+
+// Account scan: the most each photo gives away on its own, and what the ways across photos reach together.
+function aloneAndTogether(g) {
+  const alone = originals.map(() => 0);
+  let together = 0;
+  for (const inf of g.inferences) for (const w of inf.ways) {
+    const photos = new Set(w.clues.map(id => clues[id].photo));
+    if (photos.size === 1) { const [p] = photos; alone[p] = Math.max(alone[p], w.level); }
+    together = Math.max(together, w.level);
+  }
+  return [alone, together];
 }
 
 // Light up clues and draw a line from each to the report row it feeds. pairs: [[clue id, row element], ...]
@@ -232,7 +258,7 @@ function link(pairs) {
   const ids = new Set(pairs.map(([id]) => id)), rows = new Set(pairs.map(([, row]) => row));
   boxes.forEach((b, id) => b.classList.toggle("hot", ids.has(id)));
   document.querySelectorAll(".row").forEach(r => r.classList.toggle("hot", rows.has(r)));
-  $("stage").classList.toggle("dim", ids.size > 0);
+  $("stages").classList.toggle("dim", ids.size > 0);
   const svg = $("links"), base = svg.getBoundingClientRect(), at = (x, y) => `${x - base.left} ${y - base.top}`;
   svg.replaceChildren(...pairs.flatMap(([id, row]) => {
     const k = boxes.get(id).getBoundingClientRect(), r = row.getBoundingClientRect();
@@ -262,8 +288,11 @@ function redaction(level, seed) {
 }
 
 function chip(way) {
-  const c = el("span", { className: "chip" },
-    ...way.clues.flatMap((id, k) => [k ? el("span", { textContent: "+" }) : "", el("b", { textContent: clueName[id]?.[0] ?? "?" }), clueName[id]?.[1] ?? id]),
+  const photos = new Set(way.clues.map(id => clues[id]?.photo)).size;
+  const c = el("span", { className: photos > 1 ? "chip across" : "chip" },
+    ...way.clues.flatMap((id, k) => [k ? el("span", { textContent: "+" }) : "",
+      el("span", {}, el("b", { textContent: clues[id]?.n ?? "?" }), " ", clues[id]?.label ?? id)]),
+    ...(photos > 1 ? [el("i", { textContent: `${photos} photos together` })] : []),
     el("span", { className: `tag l${way.level}`, textContent: LEVEL[way.level] }));
   c.dataset.clues = way.clues.join(" ");
   return c;
@@ -285,6 +314,14 @@ function reportRow(inf, ways) {
 async function reveal(g) {
   drawBoxes(g);
   $("summary").textContent = g.summary;
+  if (originals.length > 1) {
+    const [alone, together] = aloneAndTogether(g), most = Math.max(...alone);
+    stages().forEach((s, i) => Object.assign(s.querySelector(".alone"), { hidden: false, textContent: `Alone: ${LEVEL[alone[i]]}` }));
+    $("together").textContent = together > most
+      ? `On its own, no photo gives away more than "${LEVEL[most]}". Together they reach "${LEVEL[together]}".`
+      : `Photos checked together. The worst single photo already reaches "${LEVEL[most]}".`;
+    $("together").hidden = false;
+  }
   $("rows").replaceChildren();
   if (!g.inferences.length) $("rows").append(el("li", { className: "row", textContent: "Nothing here points to you." }));
   for (const inf of [...g.inferences].sort((a, b) => b.level - a.level)) {
@@ -320,20 +357,42 @@ function settle(exposure, g) {
 
 function show(which) {
   const after = which === "after";
-  $("shown").src = after ? result : original;
-  $("stage").classList.toggle("after", after);
-  $("badge").hidden = !after || !$("badge").textContent;
+  stages().forEach((s, i) => {
+    s.querySelector("img").src = after ? results[i] : originals[i];
+    s.querySelector(".badge").hidden = !after || !s.querySelector(".badge").textContent;
+  });
+  $("stages").classList.toggle("after", after);
   $("tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.show === which));
 }
 
-// Each stage of the run replaces the "after" picture as soon as it exists: preview, edited, verified.
-function stage(image, badge, ok = false) {
-  result = image;
-  $("badge").textContent = badge;
-  $("badge").classList.toggle("ok", ok);
+// Each stage of the run replaces the "after" pictures as soon as they exist: preview, edited, verified.
+// images: one per photo, null where this step left the photo as it was.
+function stage(images, badge, ok = false) {
+  images.forEach((image, i) => { if (image) results[i] = image; });
+  stages().forEach((s, i) => {
+    const b = s.querySelector(".badge");
+    b.textContent = originals.length === 1 || touched.has(i) ? badge : "Untouched";
+    b.classList.toggle("ok", ok);
+  });
   $("tabs").hidden = false;
   show("after");
 }
+
+// Turn the clue boxes green where an edit landed. Later rounds have their own clue ids, so match by place.
+function markFixed(d, round) {
+  if (round === 1) return boxes.get(d.id)?.classList.add("fixed");
+  const cx = (d.box[0] + d.box[2]) / 2, cy = (d.box[1] + d.box[3]) / 2;
+  boxes.forEach((b, id) => {
+    const { photo, box } = clues[id];
+    if (photo === (d.photo ?? 0) && box[0] <= cx && cx <= box[2] && box[1] <= cy && cy <= box[3]) b.classList.add("fixed");
+  });
+}
+
+function scanning(on) {
+  document.querySelectorAll(".scan").forEach(s => s.hidden = !on);
+}
+
+const jpeg = images => images.map(b => b && "data:image/jpeg;base64," + b);
 
 async function handle(e) {
   eventTime = e.t == null ? null : Math.round(e.t);
@@ -341,18 +400,19 @@ async function handle(e) {
     const notes = [];
     if (e.replay) notes.push(`Replaying a recorded run of the real agent, ${e.replay}x faster. Times below are from the real run.`);
     if (e.mock) notes.push("Demo mode: no Meta API key is set, so the attack is a placeholder.");
-    if (e.metadata.gps) notes.push("This file has GPS location data. The safe copy never includes it.");
+    if (originals.length > 1) notes.push(`${originals.length} photos from one account: the attacker sees them all at once, so details that are harmless alone but give you away together count too.`);
+    e.metadata.forEach((m, i) => m.gps && notes.push(`${originals.length > 1 ? `Photo ${i + 1}` : "This file"} has GPS location data. The safe copy never includes it.`));
     if (notes.length) log("Before anything else", notes);
   } else if (e.type === "status") {
     statusText = e.text;
-    $("scan").hidden = false;
+    scanning(true);
   } else if (e.type === "attack") {
-    const g = e.graph;
-    $("scan").hidden = true;
+    const g = e.graph, where = c => originals.length > 1 ? `Photo ${(c.photo ?? 0) + 1}, ` : "";
+    scanning(false);
     const top = Math.max(0, ...Object.values(e.exposure));
     log(e.round === 1 ? `Attack: ${g.clues.length} clue${g.clues.length === 1 ? "" : "s"}, worst exposure "${LEVEL[top]}"`
                       : `Re-attack: worst exposure now "${LEVEL[top]}"`,
-      [g.summary, ...g.clues.map(c => `${c.label}: ${c.observation}`)].filter(Boolean));
+      [g.summary, ...g.clues.map(c => `${where(c)}${c.label}: ${c.observation}`)].filter(Boolean));
     if (e.round === 1) {
       if (g.clues.length) statusText = `Found ${g.clues.length} clue${g.clues.length === 1 ? "" : "s"}. Making a safe copy`;
       await reveal(g);
@@ -363,20 +423,24 @@ async function handle(e) {
     statusText = "Editing with SAM 3.1 masks and Muse Image";
     log(`Plan: ${e.text}`, e.stuck ? [`${e.stuck} way(s) in cannot be edited out and stay exposed.`] : []);
   } else if (e.type === "preview") {
-    stage("data:image/jpeg;base64," + e.image, "Preview: what will be hidden");
+    e.images.forEach((b, i) => b && touched.add(i));
+    stage(jpeg(e.images), "Preview: what will be hidden");
   } else if (e.type === "edits") {
-    statusText = "Attacking the edited photo again to check";
-    if (e.round === 1) e.edits.forEach(d => boxes.get(d.id)?.classList.add("fixed"));
-    if (e.image) stage("data:image/jpeg;base64," + e.image, "Edited, re-checking");
-    log("Edits", e.edits.map(d => `${ACTION[d.action]}: ${d.label} (${d.mask === "sam" ? "SAM 3.1 mask" : "box mask"}, ${d.engine})`));
+    statusText = "Attacking the edited photos again to check";
+    e.images.forEach((b, i) => b && touched.add(i));
+    e.edits.forEach(d => markFixed(d, e.round));
+    stage(jpeg(e.images), "Edited, re-checking");
+    log("Edits", e.edits.map(d => `${ACTION[d.action]}: ${d.label}${originals.length > 1 ? ` in photo ${d.photo + 1}` : ""} ` +
+                                 `(${d.mask === "sam" ? "SAM 3.1 mask" : "box mask"}, ${d.engine})`));
   } else if (e.type === "done") {
     clearInterval(timer);
-    $("scan").hidden = true;
+    scanning(false);
     const checked = $("log").textContent.includes("Re-attack");
-    stage(e.image_url || "data:image/png;base64," + e.image,
-      !e.safe ? "Some exposure remains" : checked ? "Verified by a second attack" : "Nothing found to hide", e.safe);
-    $("download").href = result;
-    $("download").hidden = false;
+    const urls = e.image_urls || e.images.map(b => "data:image/png;base64," + b);
+    stage(urls, !e.safe ? "Some exposure remains" : checked ? "Verified by a second attack" : "Nothing found to hide", e.safe);
+    $("downloads").replaceChildren(...urls.map((href, i) => el("a", { className: "btn primary", href,
+      download: urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png",
+      textContent: urls.length > 1 ? `Download photo ${i + 1}` : "Download safe copy" })));
     settle(e.after);
     $("stamp").textContent = !e.safe ? "Exposed" : checked ? "Verified" : "Clean";
     $("stamp").classList.toggle("ok", e.safe);
@@ -386,7 +450,7 @@ async function handle(e) {
                   : `Done, but some exposure remains ("${LEVEL[worst]}"). Check the steps below.`, !e.safe);
   } else if (e.type === "error") {
     clearInterval(timer);
-    $("scan").hidden = true;
+    scanning(false);
     status("The agent stopped: " + e.text, true);
   }
 }
@@ -395,19 +459,26 @@ function busy(on) {
   document.querySelectorAll(".samples button, #photo").forEach(b => b.disabled = on);
 }
 
-async function begin(src, request) {
-  original = src;
-  result = null;
-  $("shown").src = original;
-  $("stage").classList.remove("after", "dim");
+async function begin(srcs, request) {
+  originals = srcs;
+  results = [...srcs];
+  touched = new Set();
+  const many = srcs.length > 1;
+  $("stages").className = many ? "stages many" : "stages";
+  $("stages").replaceChildren(...srcs.map((src, i) => el("div", { className: "stage" },
+    el("img", { src, alt: many ? `Photo ${i + 1}` : "Your photo" }),
+    el("div", { className: "scan", hidden: true },
+      ...(i ? [] : [el("span", { textContent: many ? `Muse Spark is attacking all ${srcs.length} together` : "Muse Spark is attacking" })])),
+    el("span", { className: "badge", hidden: true }),
+    el("span", { className: "alone", hidden: true }))));
   $("log").replaceChildren();
   $("links").replaceChildren();
+  $("downloads").replaceChildren();
   linked = "";
   $("summary").textContent = "";
-  $("rows").replaceChildren(el("li", { className: "row wait", textContent: "Reading the photo the way a stranger would" }));
-  $("download").hidden = $("tabs").hidden = $("badge").hidden = $("stamp").hidden = true;
-  $("badge").textContent = "";
-  boxes.forEach(b => b.remove());
+  $("rows").replaceChildren(el("li", { className: "row wait",
+    textContent: many ? "Reading the account the way a stranger would" : "Reading the photo the way a stranger would" }));
+  $("tabs").hidden = $("stamp").hidden = $("together").hidden = true;
   boxes = new Map();
   $("view").hidden = false;
   $("view").scrollIntoView({ behavior: "smooth" });
@@ -432,8 +503,8 @@ async function begin(src, request) {
       }
     }
   } catch (err) {
-    $("scan").hidden = true;
-    status("Could not check this photo: " + err.message, true);
+    scanning(false);
+    status("Could not check this: " + err.message, true);
   } finally {
     clearInterval(timer);
     busy(false);
@@ -451,31 +522,34 @@ $("rows").addEventListener("mouseover", fromRow);
 $("rows").addEventListener("focusin", fromRow);
 $("rows").addEventListener("mouseleave", () => link([]));
 $("rows").addEventListener("focusout", () => link([]));
-$("stage").addEventListener("mouseover", e => {
+$("stages").addEventListener("mouseover", e => {
   const id = e.target.closest(".box")?.dataset.clue;
   if (id) link([...document.querySelectorAll(".row[data-clues]")].filter(r => r.dataset.clues.split(" ").includes(id)).map(r => [id, r]));
 });
-$("stage").addEventListener("mouseleave", () => link([]));
+$("stages").addEventListener("mouseleave", () => link([]));
 addEventListener("resize", () => link([]));
 
 $("photo").onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const files = [...e.target.files];
+  e.target.value = "";  // choosing the same files again should run again
+  if (!files.length) return;
+  if (files.length > 6) return status("Pick at most 6 photos: they are attacked together in one request.", true);
   const body = new FormData();
-  body.append("photo", file);
-  e.target.value = "";  // choosing the same file again should run again
-  begin(URL.createObjectURL(file), () => fetch("/api/run", { method: "POST", body }));
+  files.forEach(f => body.append("photos", f));
+  begin(files.map(f => URL.createObjectURL(f)), () => fetch("/api/run", { method: "POST", body }));
 };
 fetch("/api/status").then(r => r.json()).then(s => {
   $("own").hidden = !s.live;
   $("live-off").hidden = s.live;
 }).catch(() => {});
 $("samples").append(...SAMPLES.map(s => {
-  const b = el("button", {}, el("img", { src: `samples/${s.name}.jpg`, alt: "", loading: "lazy" }), el("span", { textContent: s.label }));
-  b.onclick = () => begin(`samples/${s.name}.jpg`, () => fetch(`/api/sample/${s.name}`));
+  const srcs = Array.from({ length: s.photos || 1 }, (_, i) => `samples/${s.name}-${i + 1}.jpg`);
+  const b = el("button", {}, el("div", { className: "thumbs" }, ...srcs.map(src => el("img", { src, alt: "", loading: "lazy" }))),
+    el("span", { textContent: s.label }));
+  b.onclick = () => begin(srcs, () => fetch(`/api/sample/${s.name}`));
   return b;
 }));
-$("tabs").onclick = e => e.target.dataset.show && result && show(e.target.dataset.show);
+$("tabs").onclick = e => e.target.dataset.show && originals.length && show(e.target.dataset.show);
 </script>
 </body>
 </html>

@@ -119,7 +119,7 @@ def evaluate(scene: dict) -> dict:
     rec["verified"] = legible(scene["secrets"], transcribe(img))
 
     t = time.time()
-    events = list(agent.run(img))
+    events = list(agent.run([img]))
     rec["seconds"] = round(time.time() - t, 1)
     attacks = [e for e in events if e["type"] == "attack"]
     done = events[-1]
@@ -130,7 +130,7 @@ def evaluate(scene: dict) -> dict:
     said = [attacker_text(a["graph"]) for a in attacks]
     rec["values_printed"] = legible([s for s in rec["verified"] if len(norm(s)) >= PRINTED_MIN], said)
 
-    ours = np.asarray(Image.open(io.BytesIO(base64.b64decode(done["image"]))).convert("RGB"))
+    ours = np.asarray(Image.open(io.BytesIO(base64.b64decode(done["images"][0]))).convert("RGB"))
     rec["survived_ours"] = legible(rec["verified"], transcribe(ours))
     rec["changed_ours"] = round(changed(img, ours), 4)
     nv = naive(img)

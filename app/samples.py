@@ -1,6 +1,6 @@
 """Recorded agent runs for the sample gallery: real results that play instantly and cost no API calls.
 
-Record (needs MODEL_API_KEY): uv run --env-file .env python -m app.samples
+Record (needs MODEL_API_KEY): uv run --env-file .env python -m app.samples [name ...]
 """
 import base64
 import json
@@ -10,7 +10,9 @@ from pathlib import Path
 
 SAMPLES = Path(__file__).parent.parent / "static" / "samples"
 BENCH = Path(__file__).parent.parent / "bench" / "images"
-SOURCES = {"desk": "desk_parcel", "front_door": "front_door", "kr_parcel": "kr_parcel", "inj_poster": "inj_poster"}
+# sample name -> LeakBench photos, served as static/samples/{name}-{1..n}.jpg. Several photos = one account scan.
+SOURCES = {"desk": ["desk_parcel"], "front_door": ["front_door"], "kr_parcel": ["kr_parcel"],
+           "inj_poster": ["inj_poster"], "account": ["acct_cup", "acct_class", "acct_town"]}
 SPEEDUP = 4
 
 
@@ -27,16 +29,20 @@ def replay(name: str):
 def record(name: str) -> None:
     from . import agent, pipeline
 
-    src = SAMPLES / f"{name}.jpg"
-    if not src.exists():
-        shutil.copy(BENCH / f"{SOURCES[name]}.jpg", src)
-    img, _ = pipeline.load_image(src.read_bytes())
+    imgs = []
+    for i, source in enumerate(SOURCES[name], 1):
+        src = SAMPLES / f"{name}-{i}.jpg"
+        if not src.exists():
+            shutil.copy(BENCH / f"{source}.jpg", src)
+        imgs.append(pipeline.load_image(src.read_bytes())[0])
     t0, lines = time.time(), []
-    for event in agent.run(img):
+    for event in agent.run(imgs):
         event = {**event, "t": round(time.time() - t0, 1)}
         if event["type"] == "done":
-            (SAMPLES / f"{name}.safe.png").write_bytes(base64.b64decode(event.pop("image")))
-            event["image_url"] = f"samples/{name}.safe.png"
+            event["image_urls"] = []
+            for i, png in enumerate(event.pop("images"), 1):
+                (SAMPLES / f"{name}-{i}.safe.png").write_bytes(base64.b64decode(png))
+                event["image_urls"].append(f"samples/{name}-{i}.safe.png")
         lines.append(json.dumps(event, ensure_ascii=False))
     (SAMPLES / f"{name}.ndjson").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"recorded {name}: {lines[-1][:160]}", flush=True)
@@ -47,6 +53,9 @@ if __name__ == "__main__":
 
     from . import meta
 
+    import sys
+
     assert meta.client, "recording needs MODEL_API_KEY (run with --env-file .env)"
-    with ThreadPoolExecutor(len(SOURCES)) as pool:
-        list(pool.map(record, SOURCES))
+    names = sys.argv[1:] or list(SOURCES)
+    with ThreadPoolExecutor(len(names)) as pool:
+        list(pool.map(record, names))

@@ -18,6 +18,15 @@ The safe copy is a lossless PNG with no EXIF or GPS data. The page shows each st
 about 10 seconds with a pixelated preview, the edited photo, then the re-checked result, which is the only one you can
 download.
 
+**Account scan.** Up to six photos from one account go to the attacker in a single request, because what gives
+someone away is often spread across posts: a first name on a coffee cup, a biology classroom, a town's newspaper.
+Each is harmless alone (at most "narrowed"), but together they point to one person ("specific"). Clues carry the
+photo they are in, ways can span photos, and the same hitting-set planner picks the fewest edits across the whole set;
+photos it does not need come back byte-identical. In the staged sample ([bench/accounts.json](bench/accounts.json))
+the agent first blanked the lab reports, the re-attack found the classroom still said "science teacher", so it
+blanked the newspaper's masthead instead and left the coffee cup alone. A single photo still gets exactly the
+prompt LeakBench measured.
+
 Next to the photo, an exposure report fills in as the attacker finds things: each thing a stranger could learn, how
 precise it gets, and lines back to the clues on the photo that give it away (hover a row or a box to trace it). The
 answer itself is a redacted bar that grows with precision; the attacker never reports the value, so the page cannot
@@ -79,7 +88,7 @@ Open http://localhost:8000. The sample gallery replays recorded runs and needs n
 your own photos are switched off; set `MOCK=1` to run the whole loop offline with a placeholder attacker and OpenCV
 inpainting. Live runs are rate limited (`RUNS_PER_HOUR`, default 4 per visitor; `RUNS_PER_DAY`, default 30 in total).
 
-Re-record the samples after changing the agent: `uv run --env-file .env python -m app.samples`
+Re-record the samples after changing the agent: `uv run --env-file .env python -m app.samples [name ...]`
 
 Self-checks: `uv run python -m app.pipeline`, `uv run python -m app.meta`, `uv run python -m app.agent`
 
@@ -93,5 +102,5 @@ product improvement. Test with staged photos, not real personal ones.
 - `app/pipeline.py`: masks, blur/pixelate/inpaint, mask-bounded compositing
 - `app/main.py`: `/api/run` streams the agent's progress as NDJSON; `/api/apply` applies manual edits. Stateless,
   nothing is written to disk.
-- `static/index.html`: the whole UI. `static/samples/desk.jpg` is a staged scene generated with Muse Image; every
-  name and address in it is fictional.
+- `static/index.html`: the whole UI. The photos in `static/samples/` are staged scenes generated with Muse Image;
+  every name and address in them is fictional.

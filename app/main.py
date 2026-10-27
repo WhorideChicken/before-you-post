@@ -17,6 +17,7 @@ from . import agent, meta, pipeline, samples
 
 MAX_BYTES = 20 * 1024 * 1024
 MAX_SIDE = 2048  # bounds time, cost and the size of the streamed result for a public demo
+MAX_PHOTOS = 6  # an account scan sends every photo to the attacker in one request
 RUNS_PER_HOUR = int(os.environ.get("RUNS_PER_HOUR", "4"))  # per visitor, live model runs only
 RUNS_PER_DAY = int(os.environ.get("RUNS_PER_DAY", "30"))  # whole site: about $3 of API calls at worst
 # Without a key, live runs are off and only the recorded samples play. MOCK=1 runs the loop offline with a
@@ -87,17 +88,20 @@ def require_live() -> None:
 
 
 @app.post("/api/run")
-async def run(request: Request, photo: UploadFile = File(...)):
-    """Stream the agent's progress as NDJSON: attack, plan, edits, re-attack, done (with the final PNG)."""
+async def run(request: Request, photos: list[UploadFile] = File(...)):
+    """Stream the agent's progress as NDJSON: attack, plan, edits, re-attack, done (with the final PNGs).
+    Several photos are scanned as one account: attacked together, so combinations across them count."""
     require_live()
-    img, metadata = await read_image(photo)
+    if len(photos) > MAX_PHOTOS:
+        raise HTTPException(413, f"At most {MAX_PHOTOS} photos at once")
+    loaded = [await read_image(p) for p in photos]
     allow_live_run(request)
     attack = meta.attack if meta.client else meta.mock_attacker()
 
     def events():
-        yield json.dumps({"type": "start", "metadata": metadata, "mock": meta.client is None}) + "\n"
+        yield json.dumps({"type": "start", "metadata": [m for _, m in loaded], "mock": meta.client is None}) + "\n"
         try:
-            for event in agent.run(img, attack=attack):
+            for event in agent.run([img for img, _ in loaded], attack=attack):
                 yield json.dumps(event) + "\n"
         except Exception as e:
             log.exception("agent run failed")
@@ -111,7 +115,7 @@ def sample(name: str):
     """Replay a recorded run of one of the gallery photos, sped up."""
     if name not in samples.SOURCES:
         raise HTTPException(404, "No such sample")
-    start = {"type": "start", "metadata": {"gps": False, "device": None}, "mock": False, "replay": samples.SPEEDUP}
+    start = {"type": "start", "metadata": [], "mock": False, "replay": samples.SPEEDUP}
     return ndjson(itertools.chain([json.dumps(start) + "\n"], samples.replay(name)))
 
 

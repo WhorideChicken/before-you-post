@@ -111,11 +111,15 @@ def apply_edits(img: np.ndarray, items: list[dict]) -> tuple[np.ndarray, list[di
     return out, done, union
 
 
-def run(img: np.ndarray, attack=meta.attack, target: int = TARGET):
-    """Yield progress events for the UI. The last event carries the final PNG (lossless, metadata-free)."""
-    current, before, edited = img, None, np.zeros(img.shape[:2], bool)
+def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET):
+    """Yield progress events for the UI. One photo, or several from one account attacked together: the planner then
+    breaks combinations across photos with the fewest edits overall. Image fields are lists in photo order, None for
+    a photo a step left unchanged. The last event carries the final PNGs (lossless, metadata-free)."""
+    current, before = list(imgs), None
+    edited = [np.zeros(img.shape[:2], bool) for img in imgs]
     for n in range(1, MAX_ATTACKS + 1):
-        yield {"type": "status", "text": "Attacking the photo" if n == 1 else "Re-attacking the edited photo"}
+        what = "photo" if len(imgs) == 1 else f"{len(imgs)} photos together"
+        yield {"type": "status", "text": f"Attacking the {what}" if n == 1 else f"Re-attacking the edited {what}"}
         graph = attack(current)
         exposure = meta.exposure(graph)
         before = before if before is not None else exposure
@@ -123,29 +127,40 @@ def run(img: np.ndarray, attack=meta.attack, target: int = TARGET):
         ids, stuck = plan(graph, target)
         if not ids or n == MAX_ATTACKS:
             break
-        items = []
+        items = {}  # photo index -> edits
         for c in graph["clues"]:
             if c["id"] in ids:
+                p = c["photo"]
                 # A clue found again where we already edited survived a generative edit: use one that cannot fail.
-                box = pipeline.box_mask(img.shape, c["box"])
-                action = "pixelate" if (box & edited).sum() >= ESCALATE * box.sum() else c["suggested"]
-                items.append({"id": c["id"], "label": c["label"], "box": c["box"], "action": action})
+                box = pipeline.box_mask(imgs[p].shape, c["box"])
+                action = "pixelate" if (box & edited[p]).sum() >= ESCALATE * box.sum() else c["suggested"]
+                items.setdefault(p, []).append({"id": c["id"], "photo": p, "label": c["label"], "box": c["box"],
+                                                "action": action})
+        count = sum(map(len, items.values()))
         yield {"type": "plan", "round": n, "clues": ids, "stuck": len(stuck),
-               "text": f"Breaking {len(risky_ways(graph, target))} ways in with {len(items)} "
-                       f"edit{'s' if len(items) != 1 else ''}"}
+               "text": f"Breaking {len(risky_ways(graph, target))} ways in with {count} edit{'s' if count != 1 else ''}"}
         if n == 1:
             # Something to look at while the real edits run: the planned clues pixelated, with a wide margin since
             # Spark's boxes can sit a little off. Display only; the download is always the re-checked result.
-            area = np.zeros(img.shape[:2], bool)
-            for it in items:
-                area |= pipeline.box_mask(img.shape, it["box"])
-            area = pipeline.grow(area, max(img.shape[:2]) // 30)
-            yield {"type": "preview", "image": pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))}
-        current, done, mask = apply_edits(current, items)
-        edited |= mask
-        yield {"type": "edits", "round": n, "edits": done, "image": pipeline.encode_jpeg_b64(current)}
+            preview = [None] * len(imgs)
+            for p, its in items.items():
+                img, area = imgs[p], np.zeros(imgs[p].shape[:2], bool)
+                for it in its:
+                    area |= pipeline.box_mask(img.shape, it["box"])
+                area = pipeline.grow(area, max(img.shape[:2]) // 30)
+                preview[p] = pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))
+            yield {"type": "preview", "images": preview}
+        with ThreadPoolExecutor(len(items)) as pool:
+            results = dict(zip(items, pool.map(lambda p: apply_edits(current[p], items[p]), items)))
+        done = []
+        for p, (out, did, mask) in results.items():
+            current[p] = out
+            edited[p] |= mask
+            done += did
+        yield {"type": "edits", "round": n, "edits": done,
+               "images": [pipeline.encode_jpeg_b64(current[p]) if p in results else None for p in range(len(imgs))]}
     yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "safe": not ids and not stuck,
-           "image": base64.b64encode(pipeline.encode_png(current)).decode()}
+           "images": [base64.b64encode(pipeline.encode_png(img)).decode() for img in current]}
 
 
 if __name__ == "__main__":
@@ -174,10 +189,25 @@ if __name__ == "__main__":
 
     # Offline loop: mock attack, box masks, inpaint/pixelate; converges after one round of edits.
     img = np.random.default_rng(0).integers(0, 256, (300, 400, 3), dtype=np.uint8)
-    events = list(run(img, attack=meta.mock_attacker()))
+    events = list(run([img], attack=meta.mock_attacker()))
     kinds = [e["type"] for e in events]
     assert kinds == ["status", "attack", "plan", "preview", "edits", "status", "attack", "done"], kinds
     done = events[-1]
     assert done["before"] == {"home_location": 4, "identity": 3} and done["after"] == {} and done["safe"]
     assert [e["engine"] for e in events[4]["edits"]] == ["inpaint", "pixelate", "inpaint"]
+
+    # Account scan: a name tag in photo 1 and a street sign in photo 2 are harmless alone, risky together. One edit
+    # in the cheaper photo breaks it, and the other photo comes back byte-identical.
+    tag, sign = meta.MOCK_ATTACK["clues"][1], meta.MOCK_ATTACK["clues"][2]
+    pair = {"clues": [{**tag, "photo": 1, "removal_impact": "high"}, {**sign, "photo": 2, "removal_impact": "low"}],
+            "inferences": [{"category": "identity", "reasoning": "", "ways": [
+                way(["c2"], 1), way(["c3"], 2), way(["c2", "c3"], 3)]}], "summary": ""}
+    graphs = iter([pair])
+    imgs = [img, img[::-1].copy()]
+    events = list(run(imgs, attack=lambda ims: meta.normalize(next(graphs, meta.MOCK_CLEAN), len(ims))))
+    edits = next(e for e in events if e["type"] == "edits")
+    assert [(d["id"], d["photo"]) for d in edits["edits"]] == [("c3", 1)] and edits["images"][0] is None
+    done = events[-1]
+    assert done["safe"] and done["images"][0] == base64.b64encode(pipeline.encode_png(imgs[0])).decode()
+    assert done["images"][1] != base64.b64encode(pipeline.encode_png(imgs[1])).decode()
     print("agent ok")
