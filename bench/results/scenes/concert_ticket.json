@@ -9,11 +9,11 @@
   "Lindqvist",
   "88304412"
  ],
- "seconds": 46.1,
+ "seconds": 31.7,
  "exposure_before": {
-  "identity": 3,
-  "current_location": 4,
-  "routine": 4,
+  "identity": 4,
+  "current_location": 3,
+  "routine": 3,
   "financial_or_id": 4
  },
  "exposure_after": {},
@@ -24,7 +24,10 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0458,
- "survived_naive": [],
- "changed_naive": 0.107
+ "changed_ours": 0.0415,
+ "survived_naive": [
+  "Lindqvist",
+  "88304412"
+ ],
+ "changed_naive": 0.0848
 }

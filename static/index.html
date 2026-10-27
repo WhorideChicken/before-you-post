@@ -31,6 +31,8 @@
   .stage { position: relative; margin-top: 16px; line-height: 0; }
   .stage img { width: 100%; border-radius: 8px; }
   .box { position: absolute; border: 2px solid var(--warn); border-radius: 4px; }
+  .badge { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 999px; line-height: 1.5; font-size: 13px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .7); }
+  .badge.ok { background: var(--ok); color: #04210f; }
   .box span { position: absolute; top: -2px; left: -2px; padding: 0 6px; line-height: 1.5; font-size: 12px; font-weight: 700; color: #fff; background: var(--warn); border-radius: 4px 0 4px 0; }
   .tabs { display: flex; gap: 8px; margin-top: 16px; }
   .tabs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
@@ -80,7 +82,7 @@
       <button data-show="before" aria-pressed="false">Before</button>
       <button data-show="after" aria-pressed="true">After</button>
     </div>
-    <div class="stage" id="stage"><img id="shown" alt="Your photo"></div>
+    <div class="stage" id="stage"><img id="shown" alt="Your photo"><span class="badge" id="badge" hidden></span></div>
     <a id="download" class="btn primary" download="safe-photo.png" hidden>Download safe copy</a>
 
     <h2 id="meter-title" hidden>What a stranger could learn</h2>
@@ -145,7 +147,17 @@ function show(which) {
   const after = which === "after";
   $("shown").src = after ? result : original;
   document.querySelectorAll(".box").forEach(b => b.hidden = after);
+  $("badge").hidden = !after || !$("badge").textContent;
   $("tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.show === which));
+}
+
+// Each stage of the run replaces the "after" picture as soon as it exists: preview, edited, verified.
+function stage(image, badge, ok = false) {
+  result = image;
+  $("badge").textContent = badge;
+  $("badge").classList.toggle("ok", ok);
+  $("tabs").hidden = false;
+  show("after");
 }
 
 function bar(level, kind) {
@@ -175,6 +187,7 @@ function handle(e) {
     const g = e.graph;
     if (e.round === 1) { firstGraph = g; drawBoxes(g); }
     const top = Math.max(0, ...Object.values(e.exposure));
+    if (e.round === 1 && g.clues.length) statusText = `Found ${g.clues.length} clue${g.clues.length === 1 ? "" : "s"}. Making a safe copy`;
     log(e.round === 1 ? `Attack: ${g.clues.length} clue${g.clues.length === 1 ? "" : "s"}, worst exposure "${LEVEL[top]}"`
                       : `Re-attack: worst exposure now "${LEVEL[top]}"`,
       [g.summary,
@@ -184,13 +197,18 @@ function handle(e) {
   } else if (e.type === "plan") {
     statusText = "Editing with SAM 3.1 masks and Muse Image";
     log(`Plan: ${e.text}`, e.stuck ? [`${e.stuck} way(s) in cannot be edited out and stay exposed.`] : []);
+  } else if (e.type === "preview") {
+    stage("data:image/jpeg;base64," + e.image, "Preview: what will be hidden");
   } else if (e.type === "edits") {
+    statusText = "Attacking the edited photo again to check";
+    if (e.image) stage("data:image/jpeg;base64," + e.image, "Edited, re-checking");
     log("Edits", e.edits.map(d => `${ACTION[d.action]}: ${d.label} (${d.mask === "sam" ? "SAM 3.1 mask" : "box mask"}, ${d.engine})`));
   } else if (e.type === "done") {
     clearInterval(timer);
-    result = $("download").href = e.image_url || "data:image/png;base64," + e.image;
-    $("download").hidden = $("tabs").hidden = false;
-    show("after");
+    const badge = !e.safe ? "Some exposure remains" : $("log").textContent.includes("Re-attack") ? "Verified by a second attack" : "Nothing found to hide";
+    stage(e.image_url || "data:image/png;base64," + e.image, badge, e.safe);
+    $("download").href = result;
+    $("download").hidden = false;
     meter(e.before, e.after);
     const worst = Math.max(0, ...Object.values(e.after));
     status(e.safe ? "Done. Nothing specific about you is visible any more. GPS and other file metadata are removed too."
@@ -211,7 +229,8 @@ async function begin(src, request) {
   $("shown").src = original;
   $("log").replaceChildren();
   $("meter").replaceChildren();
-  $("meter-title").hidden = $("meter-legend").hidden = $("download").hidden = $("tabs").hidden = true;
+  $("meter-title").hidden = $("meter-legend").hidden = $("download").hidden = $("tabs").hidden = $("badge").hidden = true;
+  $("badge").textContent = "";
   document.querySelectorAll(".box").forEach(b => b.remove());
   $("view").hidden = false;
   $("view").scrollIntoView({ behavior: "smooth" });

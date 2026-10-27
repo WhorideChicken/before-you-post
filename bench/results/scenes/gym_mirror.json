@@ -9,7 +9,7 @@
   "Lucas Ferreira",
   "55821"
  ],
- "seconds": 43.2,
+ "seconds": 31.1,
  "exposure_before": {
   "identity": 4,
   "financial_or_id": 4,
@@ -23,7 +23,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0215,
+ "changed_ours": 0.025,
  "survived_naive": [],
- "changed_naive": 0.1262
+ "changed_naive": 0.1805
 }

@@ -11,7 +11,7 @@
   "310 Oak Avenue",
   "4821"
  ],
- "seconds": 46.0,
+ "seconds": 35.4,
  "exposure_before": {
   "current_location": 4,
   "routine": 3,
@@ -22,11 +22,11 @@
  "safe": true,
  "attacks": 2,
  "edits": [
-  "erase:cafe receipt:sam:muse-image"
+  "erase:paper cafe receipt:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1333,
+ "changed_ours": 0.1334,
  "survived_naive": [],
- "changed_naive": 0.406
+ "changed_naive": 0.4129
 }

@@ -133,9 +133,17 @@ def run(img: np.ndarray, attack=meta.attack, target: int = TARGET):
         yield {"type": "plan", "round": n, "clues": ids, "stuck": len(stuck),
                "text": f"Breaking {len(risky_ways(graph, target))} ways in with {len(items)} "
                        f"edit{'s' if len(items) != 1 else ''}"}
+        if n == 1:
+            # Something to look at while the real edits run: the planned clues pixelated, with a wide margin since
+            # Spark's boxes can sit a little off. Display only; the download is always the re-checked result.
+            area = np.zeros(img.shape[:2], bool)
+            for it in items:
+                area |= pipeline.box_mask(img.shape, it["box"])
+            area = pipeline.grow(area, max(img.shape[:2]) // 30)
+            yield {"type": "preview", "image": pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))}
         current, done, mask = apply_edits(current, items)
         edited |= mask
-        yield {"type": "edits", "round": n, "edits": done}
+        yield {"type": "edits", "round": n, "edits": done, "image": pipeline.encode_jpeg_b64(current)}
     yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "safe": not ids and not stuck,
            "image": base64.b64encode(pipeline.encode_png(current)).decode()}
 
@@ -168,8 +176,8 @@ if __name__ == "__main__":
     img = np.random.default_rng(0).integers(0, 256, (300, 400, 3), dtype=np.uint8)
     events = list(run(img, attack=meta.mock_attacker()))
     kinds = [e["type"] for e in events]
-    assert kinds == ["status", "attack", "plan", "edits", "status", "attack", "done"], kinds
+    assert kinds == ["status", "attack", "plan", "preview", "edits", "status", "attack", "done"], kinds
     done = events[-1]
     assert done["before"] == {"home_location": 4, "identity": 3} and done["after"] == {} and done["safe"]
-    assert [e["engine"] for e in events[3]["edits"]] == ["inpaint", "pixelate", "inpaint"]
+    assert [e["engine"] for e in events[4]["edits"]] == ["inpaint", "pixelate", "inpaint"]
     print("agent ok")

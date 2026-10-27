@@ -1,4 +1,5 @@
 """Pixel side of the pipeline: masks, edits and mask-bounded compositing. No model calls here."""
+import base64
 import io
 
 import cv2
@@ -26,6 +27,13 @@ def encode_png(img: np.ndarray) -> bytes:
     buf = io.BytesIO()
     Image.fromarray(img).save(buf, "PNG")
     return buf.getvalue()
+
+
+def encode_jpeg_b64(img: np.ndarray, quality: int = 82) -> str:
+    """Small progress frames for the UI. The downloadable result stays the lossless PNG."""
+    buf = io.BytesIO()
+    Image.fromarray(img).save(buf, "JPEG", quality=quality)
+    return base64.b64encode(buf.getvalue()).decode()
 
 
 def box_mask(shape, box) -> np.ndarray:

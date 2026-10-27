@@ -14,7 +14,9 @@ fewest edits that break every way to find you, makes them, and attacks again to 
    in our tests); compositing keeps everything outside the masks pixel-identical.
 4. **Re-attack**: Muse Spark attacks the edited photo. Anything still exposed goes through another round.
 
-The safe copy is a lossless PNG with no EXIF or GPS data.
+The safe copy is a lossless PNG with no EXIF or GPS data. The page shows each stage as it lands: the clues after
+about 10 seconds with a pixelated preview, the edited photo, then the re-checked result, which is the only one you can
+download.
 
 ## LeakBench
 
@@ -28,12 +30,17 @@ is one Muse Image call told to remove all personal information.
 
 | | Before You Post | Muse Image, one instruction |
 |---|---|---|
-| Planted secrets removed | **40/41 (98%)** | 40/41 (98%) |
-| Share of the photo changed | **5.4%** | 23.3% |
+| Planted secrets removed | **41/42 (98%)** | 40/42 (95%) |
+| Share of the photo changed | **5.2%** | 24.2% |
 
 - 20/20 leak and injection scenes flagged, 0/4 controls falsely flagged, 0 secret values printed in the attacker's
-  reports. Mean 50 s and 1.2 edits per photo; the whole run cost $1.92.
-- Same privacy as repainting the photo, with about a quarter of the pixels touched.
+  reports. Mean 31 s and 1.3 edits per photo; the whole run cost $1.64.
+- At least the privacy of repainting the photo, with about a fifth of the pixels touched.
+- Speed: the attacker runs with `reasoning_effort=low`. Against the default it halved the time per photo (50 s to
+  31 s) with the same removal rate ([summary_v2_default_effort.md](bench/results/summary_v2_default_effort.md)).
+  The first fast run under-rated a readable street sign once the label next to it was gone; the prompt now states
+  that a readable street, building or stop name is street-level on its own, and the sign was added to the
+  `desk_parcel` ground truth so the benchmark catches that case.
 - The one miss (`kr_door`): with the building name gone, the agent judged a bare unit number harmless and the
   attacker called the photo safe. The verifier still counts it, which is why the benchmark scores with an
   independent pass and not the attacker's own verdict.

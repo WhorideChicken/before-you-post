@@ -7,12 +7,12 @@
  "verified": [
   "Rua das Flores"
  ],
- "seconds": 48.9,
+ "seconds": 40.0,
  "exposure_before": {
   "home_location": 4,
-  "identity": 1,
+  "identity": 3,
   "financial_or_id": 4,
-  "routine": 4
+  "routine": 3
  },
  "exposure_after": {},
  "safe": true,
@@ -23,7 +23,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.4018,
+ "changed_ours": 0.088,
  "survived_naive": [],
- "changed_naive": 0.166
+ "changed_naive": 0.1473
 }

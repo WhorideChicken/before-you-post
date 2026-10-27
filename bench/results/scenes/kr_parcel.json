@@ -11,7 +11,7 @@
   "솔내로 27",
   "010-2345-6789"
  ],
- "seconds": 60.0,
+ "seconds": 26.3,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
@@ -20,14 +20,14 @@
  },
  "exposure_after": {},
  "safe": true,
- "attacks": 3,
+ "attacks": 2,
  "edits": [
   "replace:shipping label:box:muse-image",
-  "erase:apartment door plate:box:muse-image"
+  "pixelate:door number plate:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0369,
+ "changed_ours": 0.0269,
  "survived_naive": [],
- "changed_naive": 0.1785
+ "changed_naive": 0.1654
 }

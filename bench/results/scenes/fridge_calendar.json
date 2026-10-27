@@ -9,7 +9,7 @@
   "Northgate Elementary",
   "Emma"
  ],
- "seconds": 69.8,
+ "seconds": 37.9,
  "exposure_before": {
   "work_or_school": 3,
   "identity": 1,
@@ -18,16 +18,16 @@
  },
  "exposure_after": {
   "routine": 2,
-  "other_people": 1
+  "other_people": 2
  },
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:lined fridge note:sam:muse-image"
+  "replace:handwritten pickup note:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0237,
+ "changed_ours": 0.1142,
  "survived_naive": [],
- "changed_naive": 0.3087
+ "changed_naive": 0.3076
 }

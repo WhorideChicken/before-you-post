@@ -20,11 +20,14 @@ SPARK_MODEL = os.environ.get("SPARK_MODEL", "muse-spark-1.3")
 IMAGE_MODEL = os.environ.get("IMAGE_MODEL", "muse-image-1.0")
 SAM_MODEL = os.environ.get("SAM_MODEL", "sam-3.1")
 MODEL_SIDE = 1536  # longest side sent to models; edits are composited back at full resolution
+# "low" halves the attacker's time and cost; "" uses the model default. Measured on LeakBench before switching.
+ATTACK_EFFORT = os.environ.get("ATTACK_EFFORT", "low")
+MAX_ATTACK_TOKENS = 12000  # a normal report is under 7k; caps the rare run that repeats itself until it times out
 
 if API_KEY:
     from openai import OpenAI
 
-    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=90, max_retries=1)
 else:
     client = None
 
@@ -86,6 +89,8 @@ Calibration:
   a blank, pixelated, blurred, cropped or unreadable label, sign, badge or screen exposes nothing. Do not report it.
 - Level 4 needs the exact value to be readable here (a full printed address, a house number with a readable street
   name, a full ID or account number) or a landmark that identifies one specific building.
+- A readable street name, building or complex name, or transit stop name is at least level 3 for where this is,
+  even on its own: it narrows the place to one street.
 - A generic street, houses, trees or a skyline with no readable names and no famous landmark is at most level 2.
 - The photo may already have been edited. Blank labels, empty screens, pixelation and blur are neutralized areas.
 - People posing or clearly the subject of the photo are what the owner chose to share: never report their faces or
@@ -210,6 +215,8 @@ def attack(img: np.ndarray) -> dict:
         ]}],
         response_format={"type": "json_schema",
                          "json_schema": {"name": "exposure_graph", "schema": ATTACK_SCHEMA, "strict": True}},
+        max_completion_tokens=MAX_ATTACK_TOKENS,
+        **({"reasoning_effort": ATTACK_EFFORT} if ATTACK_EFFORT else {}),
     )
     return normalize(json.loads(rsp.choices[0].message.content))
 

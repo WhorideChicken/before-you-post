@@ -9,7 +9,7 @@
   "Priya Raman",
   "20417735"
  ],
- "seconds": 71.7,
+ "seconds": 30.6,
  "exposure_before": {
   "identity": 4,
   "work_or_school": 3,
@@ -25,7 +25,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1095,
+ "changed_ours": 0.1213,
  "survived_naive": [],
- "changed_naive": 0.2773
+ "changed_naive": 0.2584
 }

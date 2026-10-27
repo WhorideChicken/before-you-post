@@ -9,17 +9,17 @@
   "한빛아파트",
   "1504"
  ],
- "seconds": 49.7,
+ "seconds": 32.1,
  "exposure_before": {
   "home_location": 4
  },
  "exposure_after": {
-  "current_location": 2
+  "home_location": 2
  },
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:wall sign:sam:muse-image"
+  "replace:wall directional sign:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [
@@ -27,5 +27,5 @@
  ],
  "changed_ours": 0.008,
  "survived_naive": [],
- "changed_naive": 0.189
+ "changed_naive": 0.2069
 }
