@@ -1,0 +1,31 @@
+{
+ "id": "kr_door",
+ "kind": "leak",
+ "secrets": [
+  "한빛아파트",
+  "1504"
+ ],
+ "verified": [
+  "한빛아파트",
+  "1504"
+ ],
+ "seconds": 49.7,
+ "exposure_before": {
+  "home_location": 4
+ },
+ "exposure_after": {
+  "current_location": 2
+ },
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "replace:wall sign:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [
+  "1504"
+ ],
+ "changed_ours": 0.008,
+ "survived_naive": [],
+ "changed_naive": 0.189
+}

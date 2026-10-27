@@ -10,10 +10,15 @@ from . import meta, pipeline
 
 log = logging.getLogger("uvicorn.error")
 
-TARGET = 1  # highest level allowed after editing: a country, a first name, a type of school
+# Highest level allowed after editing. "Narrowed" (a city, a type of workplace) is what any travel or food photo
+# says; "specific" (a street, a named school, a full name) is where finding someone starts.
+TARGET = 2
+STRICT = {"contact": 1, "financial_or_id": 1}  # even part of a phone, card or ID number is too much
 COST = {"low": 1, "medium": 3, "high": 9}  # removal_impact -> how much an edit is allowed to hurt the photo
-MAX_ATTACKS = 3  # attack, then at most two rounds of edit + re-attack
+LARGE = [(0.4, 50), (0.2, 9)]  # (share of the frame, minimum cost): repainting a whole view is a last resort
+MAX_ATTACKS = 4  # attack, then at most three rounds of edit + re-attack
 EXACT_LIMIT = 16  # exact search is 2^n subsets
+ESCALATE = 0.3  # a clue at least this much inside an already-edited area gets the edit that cannot fail
 
 
 def plan(graph: dict, target: int = TARGET) -> tuple[list[str], list[dict]]:
@@ -23,16 +28,17 @@ def plan(graph: dict, target: int = TARGET) -> tuple[list[str], list[dict]]:
     Returns the clue ids to edit, and the risky ways nothing can block because none of their clues has a box.
     """
     clues = {c["id"]: c for c in graph["clues"]}
-    ways = [w for inf in graph["inferences"] for w in inf["ways"] if w["level"] > target]
+    ways = risky_ways(graph, target)
     editable = {i for i, c in clues.items() if c["box"]}
     stuck = [w for w in ways if not editable & set(w["clues"])]
     ways = [set(w["clues"]) & editable for w in ways if editable & set(w["clues"])]
     if not ways:
         return [], stuck
     candidates = sorted(set().union(*ways))
+    price = {i: clue_cost(clues[i]) for i in candidates}
 
     def cost(s):
-        return sum(COST[clues[i]["removal_impact"]] for i in s), len(s)
+        return sum(price[i] for i in s), len(s)
 
     def blocks_all(s):
         return all(w & s for w in ways)
@@ -45,11 +51,25 @@ def plan(graph: dict, target: int = TARGET) -> tuple[list[str], list[dict]]:
         best = set()
         while not blocks_all(best):
             open_ways = [w for w in ways if not w & best]
-            best.add(max(candidates, key=lambda i: sum(i in w for w in open_ways) / COST[clues[i]["removal_impact"]]))
+            best.add(max(candidates, key=lambda i: sum(i in w for w in open_ways) / price[i]))
     return sorted(best), stuck
 
 
+def risky_ways(graph: dict, target: int = TARGET) -> list[dict]:
+    return [w for inf in graph["inferences"] for w in inf["ways"]
+            if w["level"] > min(target, STRICT.get(inf["category"], target))]
+
+
+def clue_cost(clue: dict) -> int:
+    """The attacker's own estimate of how much hiding it hurts, floored by how much of the frame it covers."""
+    x0, y0, x1, y1 = clue["box"]
+    area = (x1 - x0) * (y1 - y0)
+    return max([COST[clue["removal_impact"]]] + [c for share, c in LARGE if area >= share])
+
+
 def _mask(img: np.ndarray, item: dict) -> tuple[np.ndarray, str]:
+    """SAM's outline when it finds the object, else the attacker's box. Not both: Spark's boxes can sit off the
+    object, and a generative edit composited into that stray area can paint in things that were never there."""
     try:
         mask = meta.segment(img, item["label"], item["box"])
     except Exception:
@@ -68,14 +88,15 @@ def _generate(img: np.ndarray, item: dict) -> np.ndarray | None:
         return None
 
 
-def apply_edits(img: np.ndarray, items: list[dict]) -> tuple[np.ndarray, list[dict]]:
+def apply_edits(img: np.ndarray, items: list[dict]) -> tuple[np.ndarray, list[dict], np.ndarray]:
     """items: {label, box (0-1), action}. Model calls run in parallel on the same input; each result is
-    composited only inside its own mask, so pixels outside every mask are untouched."""
+    composited only inside its own mask, so pixels outside every mask are untouched.
+    Returns the edited image, what was done, and the union of all masks."""
     pad = max(3, max(img.shape[:2]) // 200)
     with ThreadPoolExecutor(8) as pool:
         masks = list(pool.map(lambda it: _mask(img, it), items))
         generated = list(pool.map(lambda it: _generate(img, it), items))
-    out, done = img, []
+    out, done, union = img, [], np.zeros(img.shape[:2], bool)
     for item, (mask, source), gen in zip(items, masks, generated):
         mask = pipeline.grow(mask, pad)
         if not mask.any():
@@ -85,13 +106,14 @@ def apply_edits(img: np.ndarray, items: list[dict]) -> tuple[np.ndarray, list[di
         else:
             edited, engine = getattr(pipeline, item["action"])(out), item["action"]
         out = pipeline.composite(out, edited, mask)
+        union |= mask
         done.append({**item, "mask": source, "engine": engine})
-    return out, done
+    return out, done, union
 
 
 def run(img: np.ndarray, attack=meta.attack, target: int = TARGET):
     """Yield progress events for the UI. The last event carries the final PNG (lossless, metadata-free)."""
-    current, before, edited_labels = img, None, set()
+    current, before, edited = img, None, np.zeros(img.shape[:2], bool)
     for n in range(1, MAX_ATTACKS + 1):
         yield {"type": "status", "text": "Attacking the photo" if n == 1 else "Re-attacking the edited photo"}
         graph = attack(current)
@@ -104,16 +126,17 @@ def run(img: np.ndarray, attack=meta.attack, target: int = TARGET):
         items = []
         for c in graph["clues"]:
             if c["id"] in ids:
-                # A clue that survived an earlier generative edit gets the edit that cannot fail.
-                action = "pixelate" if c["label"].lower() in edited_labels else c["suggested"]
+                # A clue found again where we already edited survived a generative edit: use one that cannot fail.
+                box = pipeline.box_mask(img.shape, c["box"])
+                action = "pixelate" if (box & edited).sum() >= ESCALATE * box.sum() else c["suggested"]
                 items.append({"id": c["id"], "label": c["label"], "box": c["box"], "action": action})
         yield {"type": "plan", "round": n, "clues": ids, "stuck": len(stuck),
-               "text": f"Breaking {len([w for i in graph['inferences'] for w in i['ways'] if w['level'] > target])} "
-                       f"ways in with {len(items)} edit{'s' if len(items) != 1 else ''}"}
-        current, done = apply_edits(current, items)
-        edited_labels |= {it["label"].lower() for it in done}
+               "text": f"Breaking {len(risky_ways(graph, target))} ways in with {len(items)} "
+                       f"edit{'s' if len(items) != 1 else ''}"}
+        current, done, mask = apply_edits(current, items)
+        edited |= mask
         yield {"type": "edits", "round": n, "edits": done}
-    yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck),
+    yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "safe": not ids and not stuck,
            "image": base64.b64encode(pipeline.encode_png(current)).decode()}
 
 
@@ -134,7 +157,12 @@ if __name__ == "__main__":
     g["inferences"].append({"category": "contact", "level": 4, "ways": [way(["c5"], 4)]})
     ids, stuck = plan(g)
     assert ids == ["c1", "c3"] and len(stuck) == 1
-    assert plan(g, target=4) == ([], [])
+    assert plan(g, target=4) == ([], stuck), "contact stays strict even with a lax target"
+    # Repainting most of the frame is the last resort, whatever the attacker estimated.
+    big = {**clue("view", "low"), "box": [0.0, 0.0, 0.8, 0.8]}
+    g2 = {"clues": [big, clue("sign", "medium")],
+          "inferences": [{"category": "home_location", "level": 3, "ways": [way(["view", "sign"], 3)]}]}
+    assert clue_cost(big) == 50 and plan(g2) == (["sign"], [])
 
     # Offline loop: mock attack, box masks, inpaint/pixelate; converges after one round of edits.
     img = np.random.default_rng(0).integers(0, 256, (300, 400, 3), dtype=np.uint8)
@@ -142,6 +170,6 @@ if __name__ == "__main__":
     kinds = [e["type"] for e in events]
     assert kinds == ["status", "attack", "plan", "edits", "status", "attack", "done"], kinds
     done = events[-1]
-    assert done["before"] == {"home_location": 4, "identity": 3} and done["after"] == {}
+    assert done["before"] == {"home_location": 4, "identity": 3} and done["after"] == {} and done["safe"]
     assert [e["engine"] for e in events[3]["edits"]] == ["inpaint", "pixelate", "inpaint"]
     print("agent ok")

@@ -1,0 +1,21 @@
+{
+ "id": "ctrl_brand",
+ "kind": "control",
+ "secrets": [],
+ "verified": [],
+ "seconds": 15.5,
+ "exposure_before": {
+  "identity": 1
+ },
+ "exposure_after": {
+  "identity": 1
+ },
+ "safe": true,
+ "attacks": 1,
+ "edits": [],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0,
+ "survived_naive": [],
+ "changed_naive": 0.0574
+}

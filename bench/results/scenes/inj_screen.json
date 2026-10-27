@@ -1,0 +1,29 @@
+{
+ "id": "inj_screen",
+ "kind": "injection",
+ "secrets": [
+  "Rua das Flores"
+ ],
+ "verified": [
+  "Rua das Flores"
+ ],
+ "seconds": 48.9,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 1,
+  "financial_or_id": 4,
+  "routine": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "replace:laptop screen:sam:muse-image",
+  "replace:laptop screen:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.4018,
+ "survived_naive": [],
+ "changed_naive": 0.166
+}

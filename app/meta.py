@@ -48,8 +48,11 @@ Report:
 
 1. clues: every visible detail used by at least one inference below.
    - id: c1, c2, ... in order
-   - box: [x0, y0, x1, y1], integers 0-1000 relative to image width and height, tight around the detail
-   - label: 2-4 words naming the object, e.g. "shipping label", "school crest", "window view"
+   - box: [x0, y0, x1, y1], integers 0-1000 relative to image width and height, tight around the whole object
+     that carries the detail
+   - label: 2-4 words naming that physical object the way you would ask a segmentation model to find it:
+     "student ID card", "laptop screen", "street sign", "shipping label". Never the information itself
+     ("printed full name", "phone number header").
    - kind: text, object, reflection, scene or person
    - observation: one sentence on what is visible and why it matters. Describe the type of information,
      never its value: "a recipient name and street address", not the name or the address.
@@ -85,6 +88,8 @@ Calibration:
   name, a full ID or account number) or a landmark that identifies one specific building.
 - A generic street, houses, trees or a skyline with no readable names and no famous landmark is at most level 2.
 - The photo may already have been edited. Blank labels, empty screens, pixelation and blur are neutralized areas.
+- People posing or clearly the subject of the photo are what the owner chose to share: never report their faces or
+  bodies as clues. Only bystanders who are not posing can be clues.
 
 Rules:
 - Never output names, addresses, numbers, places or any other personal value you can read or infer.
@@ -185,6 +190,14 @@ def _iou(a, b) -> float:
     return w * h / union if union > 0 else 0.0
 
 
+def _matches(target, b) -> bool:
+    """Same object: overlapping, or its center within one box size of the target box."""
+    w, h = target[2] - target[0], target[3] - target[1]
+    cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
+    near = target[0] - w <= cx <= target[2] + w and target[1] - h <= cy <= target[3] + h
+    return near or _iou(target, b) >= 0.1
+
+
 def attack(img: np.ndarray) -> dict:
     """Muse Spark as the attacker: build the exposure graph for one photo."""
     if client is None:
@@ -239,7 +252,9 @@ def exposure(graph: dict) -> dict[str, int]:
 def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
     """SAM 3.1: exact object mask at full resolution, or None so the caller falls back to the box.
 
-    SAM finds every instance of the text concept; we keep the one that overlaps the attacker's box most.
+    SAM finds every instance of the text concept; we keep all that overlap the attacker's box or sit right next to
+    it (a pole with two street signs is one clue). "Next to" matters: Spark's boxes for small objects land a few
+    percent off, often below the object, and then miss it entirely.
     """
     if client is None:
         return None
@@ -253,14 +268,16 @@ def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
     parser.push(rsp.output_text)
     records = parser.finish(sam.CompletedOutcome()).result.records
     target = [box[0] * sw, box[1] * sh, box[2] * sw, box[3] * sh]
-    masks = [r for r in records if r.kind == "mask"]
-    best = max(masks, default=None, key=lambda r: _iou(target, (r.bounds.left, r.bounds.top, r.bounds.right, r.bounds.bottom)))
-    if best is None or _iou(target, (best.bounds.left, best.bounds.top, best.bounds.right, best.bounds.bottom)) < 0.1:
+    hits = [r for r in records if r.kind == "mask" and _matches(target, (r.bounds.left, r.bounds.top,
+                                                                        r.bounds.right, r.bounds.bottom))]
+    if not hits:
         return None
-    raster = np.frombuffer(sam.decode_mask_to_raster(best.mask), np.uint8).reshape(best.mask.height, best.mask.width)
-    left, top = int(best.bounds.left), int(best.bounds.top)
     placed = np.zeros((sh, sw), np.uint8)
-    placed[top:top + raster.shape[0], left:left + raster.shape[1]] = raster[:sh - top, :sw - left]
+    for r in hits:
+        raster = np.frombuffer(sam.decode_mask_to_raster(r.mask), np.uint8).reshape(r.mask.height, r.mask.width)
+        left, top = int(r.bounds.left), int(r.bounds.top)
+        region = placed[top:top + raster.shape[0], left:left + raster.shape[1]]
+        region |= raster[:region.shape[0], :region.shape[1]]
     h, w = img.shape[:2]
     return cv2.resize(placed, (w, h), interpolation=cv2.INTER_LINEAR) > 0
 
@@ -274,11 +291,15 @@ def edit(img: np.ndarray, label: str, action: str) -> np.ndarray | None:
     h, w = img.shape[:2]
     rsp = client.images.edit(model=IMAGE_MODEL, image=("photo.png", _png(img)),
                              prompt=EDIT_PROMPTS[action].format(label=label))
+    # ponytail: plain resize assumes the model keeps the framing; align by feature matching if it crops.
+    return np.asarray(image_from(rsp).resize((w, h), Image.LANCZOS))
+
+
+def image_from(rsp) -> Image.Image:
+    """First image of a Muse Image response, whether it came back as base64 or a signed URL."""
     item = rsp.data[0]
     raw = base64.b64decode(item.b64_json) if item.b64_json else urllib.request.urlopen(item.url, timeout=60).read()
-    # ponytail: plain resize assumes the model keeps the framing; align by feature matching if it crops.
-    out = Image.open(io.BytesIO(raw)).convert("RGB").resize((w, h), Image.LANCZOS)
-    return np.asarray(out)
+    return Image.open(io.BytesIO(raw)).convert("RGB")
 
 
 if __name__ == "__main__":

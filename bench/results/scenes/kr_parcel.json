@@ -1,0 +1,33 @@
+{
+ "id": "kr_parcel",
+ "kind": "leak",
+ "secrets": [
+  "김하늘",
+  "솔내로 27",
+  "010-2345-6789"
+ ],
+ "verified": [
+  "김하늘",
+  "솔내로 27",
+  "010-2345-6789"
+ ],
+ "seconds": 60.0,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3,
+  "contact": 4,
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "replace:shipping label:box:muse-image",
+  "erase:apartment door plate:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0369,
+ "survived_naive": [],
+ "changed_naive": 0.1785
+}

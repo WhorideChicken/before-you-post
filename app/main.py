@@ -63,7 +63,7 @@ async def apply(photo: UploadFile = File(...), edits: str = Form("[]")):
         raise HTTPException(422, e.errors(include_url=False, include_context=False))
     img, _ = await read_image(photo)
     items = [{"label": e.label, "action": e.action, "box": [min(max(v, 0.0), 1.0) for v in e.box]} for e in edits]
-    img, done = agent.apply_edits(img, items)
+    img, done, _ = agent.apply_edits(img, items)
     return Response(pipeline.encode_png(img), media_type="image/png",
                     headers={"X-Engines": ",".join(d["engine"] for d in done)})
 

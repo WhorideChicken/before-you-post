@@ -170,8 +170,8 @@ function handle(e) {
     show("after");
     meter(e.before, e.after);
     const worst = Math.max(0, ...Object.values(e.after));
-    status(worst <= 1 ? "Done. Nothing specific about you is visible any more. GPS and other file metadata are removed too."
-                      : `Done, but some exposure remains ("${LEVEL[worst]}"). Check the steps below.`, worst > 1 || e.residual > 0);
+    status(e.safe ? "Done. Nothing specific about you is visible any more. GPS and other file metadata are removed too."
+                  : `Done, but some exposure remains ("${LEVEL[worst]}"). Check the steps below.`, !e.safe);
   } else if (e.type === "error") {
     clearInterval(timer);
     status("The agent stopped: " + e.text, true);

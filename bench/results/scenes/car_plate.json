@@ -1,0 +1,25 @@
+{
+ "id": "car_plate",
+ "kind": "leak",
+ "secrets": [
+  "7KXR392"
+ ],
+ "verified": [
+  "7KXR392"
+ ],
+ "seconds": 36.6,
+ "exposure_before": {
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "pixelate:car license plate:sam:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.012,
+ "survived_naive": [],
+ "changed_naive": 0.3347
+}

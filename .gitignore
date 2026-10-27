@@ -3,3 +3,6 @@ __pycache__/
 .env
 # private planning notes, not part of the submission
 PLAN.md
+# LeakBench outputs that are regenerated on every run
+bench/results/images/
+bench/results/run.log
