@@ -39,10 +39,11 @@ async def read_image(photo: UploadFile):
 async def detect(photo: UploadFile = File(...)):
     img, metadata = await read_image(photo)
     try:
-        findings = meta.detect(img)
+        graph = meta.attack(img)
     except Exception as e:
-        raise HTTPException(502, f"Detection failed: {e}")
-    return {"findings": findings, "metadata": metadata, "mock": meta.client is None}
+        raise HTTPException(502, f"Attack failed: {e}")
+    return {"findings": meta.findings(graph), "graph": graph, "exposure": meta.exposure(graph),
+            "metadata": metadata, "mock": meta.client is None}
 
 
 @app.post("/api/apply")

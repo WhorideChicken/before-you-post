@@ -97,8 +97,8 @@ $("photo").onchange = async e => {
   }
 };
 
-function render({ findings, metadata, mock }) {
-  const notes = [];
+function render({ findings, metadata, mock, graph }) {
+  const notes = graph.summary ? [graph.summary] : [];
   if (mock) notes.push("Demo mode: findings are placeholders until the Meta API key is set.");
   if (metadata.gps) notes.push("This file has GPS location data. It is always removed from the safe copy.");
   else if (metadata.device) notes.push(`File metadata names the device (${metadata.device}). It is removed from the safe copy.`);
