@@ -18,6 +18,11 @@ The safe copy is a lossless PNG with no EXIF or GPS data. The page shows each st
 about 10 seconds with a pixelated preview, the edited photo, then the re-checked result, which is the only one you can
 download.
 
+Next to the photo, an exposure report fills in as the attacker finds things: each thing a stranger could learn, how
+precise it gets, and lines back to the clues on the photo that give it away (hover a row or a box to trace it). The
+answer itself is a redacted bar that grows with precision; the attacker never reports the value, so the page cannot
+show it. Each re-attack shrinks the bars to what is left, and the report ends stamped verified or exposed.
+
 ## LeakBench
 
 24 staged photos generated with Muse Image ([bench/scenes.json](bench/scenes.json), [bench/images](bench/images)):
