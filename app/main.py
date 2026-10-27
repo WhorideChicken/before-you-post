@@ -57,7 +57,11 @@ async def apply(photo: UploadFile = File(...), edits: str = Form("[]")):
     engines = []
     for e in edits:
         box = tuple(min(max(v, 0.0), 1.0) for v in e.box)
-        mask = meta.segment(img, e.label, box)
+        try:
+            mask = meta.segment(img, e.label, box)
+        except Exception:
+            log.exception("SAM segmentation failed, falling back to the box")
+            mask = None
         mask = pipeline.grow(mask if mask is not None else pipeline.box_mask(img.shape, box), pad)
         if not mask.any():
             continue

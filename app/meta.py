@@ -9,6 +9,8 @@ import json
 import os
 import urllib.request
 
+import cv2
+import meta_sam_parser as sam
 import numpy as np
 from PIL import Image
 
@@ -16,6 +18,7 @@ API_KEY = os.environ.get("MODEL_API_KEY")
 BASE_URL = os.environ.get("MODEL_API_BASE", "https://api.meta.ai/v1")
 SPARK_MODEL = os.environ.get("SPARK_MODEL", "muse-spark-1.3")
 IMAGE_MODEL = os.environ.get("IMAGE_MODEL", "muse-image-1.0")
+SAM_MODEL = os.environ.get("SAM_MODEL", "sam-3.1")
 MODEL_SIDE = 1536  # longest side sent to models; edits are composited back at full resolution
 
 if API_KEY:
@@ -137,25 +140,40 @@ MOCK_ATTACK = {
 }
 
 
-def _png(img: np.ndarray, side: int | None = MODEL_SIDE) -> bytes:
+def _small(img: np.ndarray, side: int | None = MODEL_SIDE) -> Image.Image:
     pil = Image.fromarray(img)
     if side:
         pil.thumbnail((side, side))
+    return pil
+
+
+def _png(img: np.ndarray | Image.Image, side: int | None = MODEL_SIDE) -> bytes:
+    pil = img if isinstance(img, Image.Image) else _small(img, side)
     buf = io.BytesIO()
     pil.save(buf, "PNG")
     return buf.getvalue()
+
+
+def _data_url(pil: Image.Image) -> str:
+    return "data:image/png;base64," + base64.b64encode(_png(pil)).decode()
+
+
+def _iou(a, b) -> float:
+    w = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+    h = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    union = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - w * h
+    return w * h / union if union > 0 else 0.0
 
 
 def attack(img: np.ndarray) -> dict:
     """Muse Spark as the attacker: build the exposure graph for one photo."""
     if client is None:
         return normalize(MOCK_ATTACK)
-    url = "data:image/png;base64," + base64.b64encode(_png(img)).decode()
     rsp = client.chat.completions.create(
         model=SPARK_MODEL,
         messages=[{"role": "user", "content": [
             {"type": "text", "text": ATTACK_PROMPT},
-            {"type": "image_url", "image_url": {"url": url}},
+            {"type": "image_url", "image_url": {"url": _data_url(_small(img))}},
         ]}],
         response_format={"type": "json_schema",
                          "json_schema": {"name": "exposure_graph", "schema": ATTACK_SCHEMA, "strict": True}},
@@ -206,9 +224,32 @@ def findings(graph: dict) -> list[dict]:
 
 
 def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
-    """SAM 3.1: exact object mask. TODO once logged-in docs are readable: sam-3.1 takes a text prompt via
-    POST /v1/responses (image via /v1/files) and returns boxes + masks. None -> caller uses the box."""
-    return None
+    """SAM 3.1: exact object mask at full resolution, or None so the caller falls back to the box.
+
+    SAM finds every instance of the text concept; we keep the one that overlaps the attacker's box most.
+    """
+    if client is None:
+        return None
+    small = _small(img)
+    sw, sh = small.size
+    rsp = client.responses.create(model=SAM_MODEL, input=[{"role": "user", "content": [
+        {"type": "input_text", "text": label},
+        {"type": "input_image", "image_url": _data_url(small)},
+    ]}])
+    parser = sam.image_segmentation_format().create_parser()
+    parser.push(rsp.output_text)
+    records = parser.finish(sam.CompletedOutcome()).result.records
+    target = [box[0] * sw, box[1] * sh, box[2] * sw, box[3] * sh]
+    masks = [r for r in records if r.kind == "mask"]
+    best = max(masks, default=None, key=lambda r: _iou(target, (r.bounds.left, r.bounds.top, r.bounds.right, r.bounds.bottom)))
+    if best is None or _iou(target, (best.bounds.left, best.bounds.top, best.bounds.right, best.bounds.bottom)) < 0.1:
+        return None
+    raster = np.frombuffer(sam.decode_mask_to_raster(best.mask), np.uint8).reshape(best.mask.height, best.mask.width)
+    left, top = int(best.bounds.left), int(best.bounds.top)
+    placed = np.zeros((sh, sw), np.uint8)
+    placed[top:top + raster.shape[0], left:left + raster.shape[1]] = raster[:sh - top, :sw - left]
+    h, w = img.shape[:2]
+    return cv2.resize(placed, (w, h), interpolation=cv2.INTER_LINEAR) > 0
 
 
 def erase(img: np.ndarray, label: str) -> np.ndarray | None:
