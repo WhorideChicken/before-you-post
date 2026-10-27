@@ -1,8 +1,19 @@
 # Before You Post
 
-Find the personal info hidden in a photo (shipping labels, name tags, plates, screens, location clues,
-GPS metadata) and remove it before posting. Muse Spark finds it, SAM 3.1 outlines it, Muse Image erases it,
-and the edit is composited back only inside the mask, so the rest of the photo is pixel-identical.
+A privacy red-team agent for your photos. It attacks a photo the way a determined stranger would, plans the
+fewest edits that break every way to find you, makes them, and attacks again to check.
+
+1. **Attack**: Muse Spark builds an exposure graph: clues (a shipping label, a street sign through the window,
+   a badge) and the inferences they enable, each with every independent way to reach it and how precise it gets
+   (broad, narrowed, specific, exact). It describes what is exposed but never prints the personal values.
+2. **Plan**: a minimum-cost hitting set over those ways picks the cheapest clues to remove so nothing above
+   "broad" can still be inferred.
+3. **Edit**: SAM 3.1 outlines each clue, Muse Image replaces it with a blank version or erases it, and the result is
+   composited back only inside the mask. Muse Image also changes pixels it was not asked to (7-12% of the frame
+   in our tests); compositing keeps everything outside the masks pixel-identical.
+4. **Re-attack**: Muse Spark attacks the edited photo. Anything still exposed goes through another round.
+
+The safe copy is a lossless PNG with no EXIF or GPS data.
 
 ## Hackathon note
 
@@ -22,13 +33,20 @@ cp .env.example .env   # add MODEL_API_KEY; leave it empty for offline demo mode
 uv run --env-file .env uvicorn app.main:app --reload
 ```
 
-Open http://localhost:8000. Without a key, detection returns mock findings and "erase" uses OpenCV inpainting.
+Open http://localhost:8000 and press "Try a sample photo". Without a key the attack is a placeholder and edits use
+OpenCV inpainting, so the whole loop still runs offline.
 
-Self-check (edits never touch pixels outside the mask): `uv run python -m app.pipeline`
+Self-checks: `uv run python -m app.pipeline`, `uv run python -m app.meta`, `uv run python -m app.agent`
+
+Privacy note: while the Meta Model API account uses free hackathon credits, Meta may use submitted content for
+product improvement. Test with staged photos, not real personal ones.
 
 ## Layout
 
-- `app/meta.py` — Meta Model API calls (Spark detection, SAM segmentation, Muse Image erase)
-- `app/pipeline.py` — masks, blur/pixelate/inpaint, mask-bounded compositing
-- `app/main.py` — `/api/detect`, `/api/apply`; stateless, nothing written to disk
-- `static/index.html` — the whole UI
+- `app/agent.py`: the loop (attack, plan, edit, re-attack) and the hitting-set planner
+- `app/meta.py`: Meta Model API calls (Muse Spark attacker, SAM 3.1 segmentation, Muse Image edits)
+- `app/pipeline.py`: masks, blur/pixelate/inpaint, mask-bounded compositing
+- `app/main.py`: `/api/run` streams the agent's progress as NDJSON; `/api/apply` applies manual edits. Stateless,
+  nothing is written to disk.
+- `static/index.html`: the whole UI. `static/samples/desk.jpg` is a staged scene generated with Muse Image; every
+  name and address in it is fictional.

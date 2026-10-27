@@ -56,8 +56,12 @@ Report:
    - legibility: clear, partial or faint
    - removal_impact: how much hiding it hurts the photo. low = background detail, medium, high = the main
      subject or most of the frame
-   - suggested: erase (can disappear naturally), replace (swap for a generic version, e.g. a blank label),
-     pixelate (text, codes, screens) or blur (bystanders' faces)
+   - suggested: how to neutralize it while the photo still looks natural.
+     replace: the object should stay but its content must go: labels, signs, screens, documents, badges, cards.
+       They become blank, generic versions of themselves.
+     erase: small loose objects that can simply disappear: sticky notes, mail, receipts, house numbers.
+     pixelate: only when the content is too small or tangled to replace cleanly.
+     blur: bystanders' faces.
 
 2. inferences: what a stranger could conclude.
    - category: home_location, current_location, work_or_school, identity, contact, routine, financial_or_id,
@@ -73,6 +77,14 @@ Report:
      gives the exact value, and c2 with c3 together still narrow it to a street.
 
 3. summary: one sentence for the owner on the biggest risk, without any personal value.
+
+Calibration:
+- Count only what is actually visible and legible in this photo. Never assume what an object usually contains:
+  a blank, pixelated, blurred, cropped or unreadable label, sign, badge or screen exposes nothing. Do not report it.
+- Level 4 needs the exact value to be readable here (a full printed address, a house number with a readable street
+  name, a full ID or account number) or a landmark that identifies one specific building.
+- A generic street, houses, trees or a skyline with no readable names and no famous landmark is at most level 2.
+- The photo may already have been edited. Blank labels, empty screens, pixelation and blur are neutralized areas.
 
 Rules:
 - Never output names, addresses, numbers, places or any other personal value you can read or infer.
@@ -138,6 +150,14 @@ MOCK_ATTACK = {
     ],
     "summary": "The delivery label exposes your home address, and the view outside still narrows it to one street.",
 }
+MOCK_CLEAN = {"clues": [], "inferences": [], "summary": "Nothing in the photo exposes you any more."}
+
+EDIT_PROMPTS = {
+    "erase": "Remove the {label} completely and fill its area so it blends naturally with the surrounding scene. "
+             "Change nothing else in the photo.",
+    "replace": "Replace the {label} with a blank, generic version of itself: no text, numbers, names, logos or "
+               "codes. Keep its shape, position, lighting and perspective. Change nothing else in the photo.",
+}
 
 
 def _small(img: np.ndarray, side: int | None = MODEL_SIDE) -> Image.Image:
@@ -202,25 +222,18 @@ def normalize(graph: dict) -> dict:
             "summary": graph.get("summary", "")}
 
 
+def mock_attacker():
+    """Offline stand-in for attack(): the mock graph first, a clean photo on every re-attack."""
+    graphs = iter([MOCK_ATTACK])
+    return lambda img: normalize(next(graphs, MOCK_CLEAN))
+
+
 def exposure(graph: dict) -> dict[str, int]:
     """Highest level reached per category: the meter the UI shows before and after edits."""
     out = {}
     for inf in graph["inferences"]:
         out[inf["category"]] = max(out.get(inf["category"], 0), inf["level"])
     return out
-
-
-def findings(graph: dict) -> list[dict]:
-    """Flatten the graph into the per-object list the current UI shows."""
-    category = {}
-    for inf in graph["inferences"]:
-        for w in inf["ways"]:
-            for i in w["clues"]:
-                category.setdefault(i, inf["category"])
-    # ponytail: "replace" shows as erase until the UI and /api/apply learn it (D2).
-    return [{"box": c["box"], "label": c["label"], "category": category[c["id"]], "reason": c["observation"],
-             "suggested": "erase" if c["suggested"] == "replace" else c["suggested"]}
-            for c in graph["clues"] if c["box"]]
 
 
 def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
@@ -252,18 +265,15 @@ def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
     return cv2.resize(placed, (w, h), interpolation=cv2.INTER_LINEAR) > 0
 
 
-def erase(img: np.ndarray, label: str) -> np.ndarray | None:
-    """Muse Image: remove the object by instruction. It takes no mask, so the caller composites the result
-    back only inside the segment mask. Returns a full-size RGB array, or None without a key."""
+def edit(img: np.ndarray, label: str, action: str) -> np.ndarray | None:
+    """Muse Image: erase or replace the object by instruction. It takes no mask and also changes pixels it was
+    not asked to, so the caller composites the result back only inside the segment mask.
+    Returns a full-size RGB array, or None without a key."""
     if client is None:
         return None
     h, w = img.shape[:2]
-    rsp = client.images.edit(
-        model=IMAGE_MODEL,
-        image=("photo.png", _png(img)),
-        prompt=f"Remove the {label} completely and fill its area so it blends naturally with the "
-               "surrounding scene. Change nothing else in the photo.",
-    )
+    rsp = client.images.edit(model=IMAGE_MODEL, image=("photo.png", _png(img)),
+                             prompt=EDIT_PROMPTS[action].format(label=label))
     item = rsp.data[0]
     raw = base64.b64decode(item.b64_json) if item.b64_json else urllib.request.urlopen(item.url, timeout=60).read()
     # ponytail: plain resize assumes the model keeps the framing; align by feature matching if it crops.
@@ -274,8 +284,10 @@ def erase(img: np.ndarray, label: str) -> np.ndarray | None:
 if __name__ == "__main__":
     g = normalize(MOCK_ATTACK)
     assert exposure(g) == {"home_location": 4, "identity": 3}
-    assert [f["label"] for f in findings(g)] == ["shipping label", "name tag", "street sign"]
-    assert findings(g)[0]["box"] == [0.08, 0.55, 0.45, 0.88] and findings(g)[0]["suggested"] == "erase"
+    assert [c["label"] for c in g["clues"]] == ["shipping label", "name tag", "street sign"]
+    assert g["clues"][0]["box"] == [0.08, 0.55, 0.45, 0.88]
+    attacker = mock_attacker()
+    assert exposure(attacker(None)) and exposure(attacker(None)) == {}
     # Bad model output: zero-width box and a way citing a clue that does not exist.
     bad = {"clues": [{**MOCK_ATTACK["clues"][1], "box": [900, 900, 900, 950]}],
            "inferences": [{"category": "identity", "reasoning": "", "ways": [
@@ -283,5 +295,5 @@ if __name__ == "__main__":
                {"clues": ["c9"], "level": 4, "confidence": "high"}]}]}
     g = normalize(bad)
     assert g["clues"][0]["box"] is None, "unusable box must stay reported, not vanish"
-    assert exposure(g) == {"identity": 3} and findings(g) == []
+    assert exposure(g) == {"identity": 3}
     print("meta ok")

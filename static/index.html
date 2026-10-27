@@ -5,68 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Before You Post</title>
 <style>
-  :root { --bg: #fafafa; --fg: #1a1a1a; --muted: #666; --card: #fff; --line: #ddd; --accent: #0866ff; --warn: #c2410c; }
+  :root { --bg: #fafafa; --fg: #1a1a1a; --muted: #666; --card: #fff; --line: #ddd; --accent: #0866ff; --warn: #c2410c; --ok: #15803d; }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #111; --fg: #eee; --muted: #999; --card: #1c1c1c; --line: #333; --accent: #4d94ff; --warn: #fb923c; }
+    :root { --bg: #111; --fg: #eee; --muted: #999; --card: #1c1c1c; --line: #333; --accent: #4d94ff; --warn: #fb923c; --ok: #4ade80; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
-  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
   h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  h2 { margin: 28px 0 8px; font-size: 1.1rem; }
   p.sub { margin: 0 0 20px; color: var(--muted); }
-  .pick { display: block; padding: 28px; border: 2px dashed var(--line); border-radius: 12px; text-align: center; cursor: pointer; background: var(--card); }
+  .pick { display: flex; gap: 12px; flex-wrap: wrap; }
+  .pick label { flex: 1 1 240px; padding: 24px; border: 2px dashed var(--line); border-radius: 12px; text-align: center; cursor: pointer; background: var(--card); }
   .pick input { display: none; }
+  button, a.btn { font: inherit; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; text-decoration: none; }
+  a.btn.primary { display: inline-block; margin-top: 12px; background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: wait; }
   .notice { margin: 16px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
   .notice.warn { border-color: var(--warn); }
   .stage { position: relative; margin-top: 16px; line-height: 0; }
   .stage img { width: 100%; border-radius: 8px; }
   .box { position: absolute; border: 2px solid var(--warn); border-radius: 4px; }
   .box span { position: absolute; top: -2px; left: -2px; padding: 0 6px; line-height: 1.5; font-size: 12px; font-weight: 700; color: #fff; background: var(--warn); border-radius: 4px 0 4px 0; }
-  ol { padding: 0; list-style: none; }
-  li { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin-top: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
-  li .n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--warn); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; }
-  li .text { flex: 1; min-width: 0; }
-  li .reason { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
-  select, button, a.btn { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
-  button.primary, a.btn { display: inline-block; margin-top: 16px; background: var(--accent); border-color: var(--accent); color: #fff; text-decoration: none; cursor: pointer; }
-  button:disabled { opacity: .5; cursor: wait; }
+  .tabs { display: flex; gap: 8px; margin-top: 16px; }
+  .tabs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  ol.log { list-style: none; padding: 0; margin: 0; }
+  ol.log > li { padding: 12px; margin-top: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+  ol.log .head { font-weight: 600; }
+  ol.log .time { float: right; color: var(--muted); font-size: 13px; font-weight: 400; }
+  ol.log ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .meter { display: grid; grid-template-columns: minmax(120px, 1fr) auto auto auto; gap: 6px 10px; align-items: center; }
+  .bar { display: flex; gap: 3px; }
+  .bar i { width: 18px; height: 10px; border-radius: 3px; background: var(--line); }
+  .bar.before i.on { background: var(--warn); }
+  .bar.after i.on { background: var(--ok); }
+  .lvl { color: var(--muted); font-size: 14px; }
+  @media (max-width: 520px) {
+    .meter { grid-template-columns: 1fr auto auto; }
+    .lvl { grid-column: 1 / -1; margin: -4px 0 4px; }
+  }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <main>
   <h1>Before You Post</h1>
-  <p class="sub">Find what your photo gives away, then remove it. Nothing is stored.</p>
+  <p class="sub">A red-team agent attacks your photo the way a stranger would, then removes exactly what gives you away and attacks again to check.</p>
 
-  <label class="pick">
-    <input id="photo" type="file" accept="image/*">
-    <strong>Choose a photo</strong>
-  </label>
+  <div class="pick">
+    <label><input id="photo" type="file" accept="image/*"><strong>Choose a photo</strong></label>
+    <button id="sample">Try a sample photo</button>
+  </div>
 
   <p id="status" class="notice" hidden></p>
 
-  <section id="review" hidden>
-    <div class="stage" id="stage"><img id="preview" alt="Your photo"></div>
-    <ol id="findings"></ol>
-    <button id="apply" class="primary">Make it safe</button>
-  </section>
+  <section id="view" hidden>
+    <div class="tabs" id="tabs" hidden>
+      <button data-show="before" aria-pressed="false">Before</button>
+      <button data-show="after" aria-pressed="true">After</button>
+    </div>
+    <div class="stage" id="stage"><img id="shown" alt="Your photo"></div>
+    <a id="download" class="btn primary" download="safe-photo.png" hidden>Download safe copy</a>
 
-  <section id="result" hidden>
-    <div class="stage"><img id="clean" alt="Cleaned photo"></div>
-    <a id="download" class="btn" download="safe-photo.png">Download</a>
+    <h2 id="meter-title" hidden>What a stranger could learn</h2>
+    <p class="lvl" id="meter-legend" hidden>Orange: before. Green: after the agent's edits.</p>
+    <div class="meter" id="meter"></div>
+
+    <h2>What the agent did</h2>
+    <ol class="log" id="log"></ol>
   </section>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
-const ACTIONS = { erase: "Erase naturally", pixelate: "Pixelate", blur: "Blur", keep: "Keep" };
-let file = null, findings = [];
-
-function status(text, warn = false) {
-  $("status").hidden = !text;
-  $("status").textContent = text;
-  $("status").classList.toggle("warn", warn);
-}
+const CATEGORY = {
+  home_location: "Where you live", current_location: "Where this was taken", work_or_school: "Work or school",
+  identity: "Who you are", contact: "How to reach you", routine: "Your routine",
+  financial_or_id: "ID and account numbers", other_people: "People around you",
+};
+const LEVEL = ["Hidden", "Broad", "Narrowed", "Specific", "Exact"];
+const ACTION = { erase: "Erased", replace: "Replaced with a blank version", pixelate: "Pixelated", blur: "Blurred" };
+let original = null, result = null, firstGraph = null, t0 = 0, timer = 0, statusText = "";
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -74,76 +93,137 @@ function el(tag, props = {}, ...children) {
   return node;
 }
 
-async function post(url, body) {
-  const r = await fetch(url, { method: "POST", body });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
-  return r;
+function status(text, warn = false) {
+  statusText = text;
+  $("status").hidden = !text;
+  $("status").textContent = text;
+  $("status").classList.toggle("warn", warn);
 }
 
-$("photo").onchange = async e => {
-  file = e.target.files[0];
+function tick() {
+  $("status").textContent = `${statusText}… ${Math.round((Date.now() - t0) / 1000)}s`;
+}
+
+// Model output is untrusted (a photo can carry crafted text), so it only ever goes in via textContent.
+function log(head, items = []) {
+  const secs = Math.round((Date.now() - t0) / 1000);
+  $("log").append(el("li", {}, el("div", { className: "head" }, head, el("span", { className: "time", textContent: `${secs}s` })),
+    ...(items.length ? [el("ul", {}, ...items.map(t => el("li", { textContent: t })))] : [])));
+}
+
+function drawBoxes(graph) {
+  document.querySelectorAll(".box").forEach(b => b.remove());
+  graph.clues.filter(c => c.box).forEach((c, i) => {
+    const [x0, y0, x1, y1] = c.box;
+    $("stage").append(el("div", { className: "box", style: `left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%` },
+      el("span", { textContent: c.id })));
+  });
+}
+
+function show(which) {
+  const after = which === "after";
+  $("shown").src = after ? result : original;
+  document.querySelectorAll(".box").forEach(b => b.hidden = after);
+  $("tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.show === which));
+}
+
+function bar(level, kind) {
+  return el("span", { className: `bar ${kind}`, title: LEVEL[level] }, ...[1, 2, 3, 4].map(n => el("i", { className: n <= level ? "on" : "" })));
+}
+
+function meter(before, after) {
+  const cats = Object.keys(CATEGORY).filter(c => before[c] || after[c]);
+  $("meter-title").hidden = $("meter-legend").hidden = !cats.length;
+  $("meter").replaceChildren(...cats.flatMap(c => [
+    el("span", { textContent: CATEGORY[c] }), bar(before[c] || 0, "before"), bar(after[c] || 0, "after"),
+    el("span", { className: "lvl", textContent: `${LEVEL[before[c] || 0]} → ${LEVEL[after[c] || 0]}` }),
+  ]));
+}
+
+function handle(e) {
+  if (e.type === "start") {
+    const notes = [];
+    if (e.mock) notes.push("Demo mode: no Meta API key is set, so the attack is a placeholder.");
+    if (e.metadata.gps) notes.push("This file has GPS location data. The safe copy never includes it.");
+    if (notes.length) log("Before anything else", notes);
+  } else if (e.type === "status") {
+    statusText = e.text;
+  } else if (e.type === "attack") {
+    const g = e.graph;
+    if (e.round === 1) { firstGraph = g; drawBoxes(g); }
+    const top = Math.max(0, ...Object.values(e.exposure));
+    log(e.round === 1 ? `Attack: ${g.clues.length} clue${g.clues.length === 1 ? "" : "s"}, worst exposure "${LEVEL[top]}"`
+                      : `Re-attack: worst exposure now "${LEVEL[top]}"`,
+      [g.summary,
+       ...g.inferences.map(inf => `${CATEGORY[inf.category]}: ` +
+         inf.ways.map(w => `${LEVEL[w.level]} via ${w.clues.join(" + ")}`).join(", or ")),
+       ...g.clues.map(c => `${c.id} ${c.label}: ${c.observation}`)].filter(Boolean));
+  } else if (e.type === "plan") {
+    statusText = "Editing with SAM 3.1 masks and Muse Image";
+    log(`Plan: ${e.text}`, e.stuck ? [`${e.stuck} way(s) in cannot be edited out and stay exposed.`] : []);
+  } else if (e.type === "edits") {
+    log("Edits", e.edits.map(d => `${ACTION[d.action]}: ${d.label} (${d.mask === "sam" ? "SAM 3.1 mask" : "box mask"}, ${d.engine})`));
+  } else if (e.type === "done") {
+    clearInterval(timer);
+    result = $("download").href = "data:image/png;base64," + e.image;
+    $("download").hidden = $("tabs").hidden = false;
+    show("after");
+    meter(e.before, e.after);
+    const worst = Math.max(0, ...Object.values(e.after));
+    status(worst <= 1 ? "Done. Nothing specific about you is visible any more. GPS and other file metadata are removed too."
+                      : `Done, but some exposure remains ("${LEVEL[worst]}"). Check the steps below.`, worst > 1 || e.residual > 0);
+  } else if (e.type === "error") {
+    clearInterval(timer);
+    status("The agent stopped: " + e.text, true);
+  }
+}
+
+async function start(file) {
   if (!file) return;
-  $("review").hidden = $("result").hidden = true;
-  $("preview").src = URL.createObjectURL(file);
-  status("Looking for personal info…");
+  original = URL.createObjectURL(file);
+  result = null;
+  $("shown").src = original;
+  $("log").replaceChildren();
+  $("meter").replaceChildren();
+  $("meter-title").hidden = $("meter-legend").hidden = $("download").hidden = $("tabs").hidden = true;
+  document.querySelectorAll(".box").forEach(b => b.remove());
+  $("view").hidden = false;
+  $("sample").disabled = true;
+  t0 = Date.now();
+  status("Uploading");
+  timer = setInterval(tick, 1000);
   const body = new FormData();
   body.append("photo", file);
   try {
-    const data = await (await post("/api/detect", body)).json();
-    findings = data.findings;
-    render(data);
+    const r = await fetch("/api/run", { method: "POST", body });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i);
+        buf = buf.slice(i + 1);
+        if (line) handle(JSON.parse(line));
+      }
+    }
   } catch (err) {
     status("Could not check this photo: " + err.message, true);
+  } finally {
+    clearInterval(timer);
+    $("sample").disabled = false;
   }
-};
-
-function render({ findings, metadata, mock, graph }) {
-  const notes = graph.summary ? [graph.summary] : [];
-  if (mock) notes.push("Demo mode: findings are placeholders until the Meta API key is set.");
-  if (metadata.gps) notes.push("This file has GPS location data. It is always removed from the safe copy.");
-  else if (metadata.device) notes.push(`File metadata names the device (${metadata.device}). It is removed from the safe copy.`);
-  if (!findings.length) notes.push("No visible personal info found.");
-  status(notes.join(" "), metadata.gps);
-
-  // Model output is untrusted (a photo can contain crafted text), so it only ever goes in via textContent.
-  document.querySelectorAll(".box").forEach(b => b.remove());
-  $("findings").replaceChildren(...findings.map((f, i) => {
-    const [x0, y0, x1, y1] = f.box;
-    $("stage").append(el("div", { className: "box", style: `left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%` }, el("span", { textContent: i + 1 })));
-    const select = el("select", { "aria-label": `Action for ${f.label}` },
-      ...Object.entries(ACTIONS).map(([value, text]) => el("option", { value, textContent: text })));
-    select.value = f.suggested;
-    select.dataset.i = i;
-    return el("li", {},
-      el("span", { className: "n", textContent: i + 1 }),
-      el("div", { className: "text" }, el("strong", { textContent: f.label }), el("p", { className: "reason", textContent: f.reason })),
-      select);
-  }));
-  $("review").hidden = false;
 }
 
-$("apply").onclick = async () => {
-  const edits = [...$("findings").querySelectorAll("select")]
-    .filter(s => s.value !== "keep")
-    .map(s => ({ box: findings[s.dataset.i].box, label: findings[s.dataset.i].label, action: s.value }));
-  const body = new FormData();
-  body.append("photo", file);
-  body.append("edits", JSON.stringify(edits));
-  $("apply").disabled = true;
-  status("Removing…");
-  try {
-    const r = await post("/api/apply", body);
-    const url = URL.createObjectURL(await r.blob());
-    $("clean").src = $("download").href = url;
-    $("result").hidden = false;
-    status("Done. Location data and other file metadata were removed too.");
-    $("result").scrollIntoView({ behavior: "smooth" });
-  } catch (err) {
-    status("Could not edit this photo: " + err.message, true);
-  } finally {
-    $("apply").disabled = false;
-  }
+$("photo").onchange = e => start(e.target.files[0]);
+$("sample").onclick = async () => {
+  const blob = await (await fetch("samples/desk.jpg")).blob();
+  start(new File([blob], "desk.jpg", { type: blob.type }));
 };
+$("tabs").onclick = e => e.target.dataset.show && result && show(e.target.dataset.show);
 </script>
 </body>
 </html>
