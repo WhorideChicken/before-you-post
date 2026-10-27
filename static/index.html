@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before You Post</title>
+<style>
+  :root { --bg: #fafafa; --fg: #1a1a1a; --muted: #666; --card: #fff; --line: #ddd; --accent: #0866ff; --warn: #c2410c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111; --fg: #eee; --muted: #999; --card: #1c1c1c; --line: #333; --accent: #4d94ff; --warn: #fb923c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  p.sub { margin: 0 0 20px; color: var(--muted); }
+  .pick { display: block; padding: 28px; border: 2px dashed var(--line); border-radius: 12px; text-align: center; cursor: pointer; background: var(--card); }
+  .pick input { display: none; }
+  .notice { margin: 16px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
+  .notice.warn { border-color: var(--warn); }
+  .stage { position: relative; margin-top: 16px; line-height: 0; }
+  .stage img { width: 100%; border-radius: 8px; }
+  .box { position: absolute; border: 2px solid var(--warn); border-radius: 4px; }
+  .box span { position: absolute; top: -2px; left: -2px; padding: 0 6px; line-height: 1.5; font-size: 12px; font-weight: 700; color: #fff; background: var(--warn); border-radius: 4px 0 4px 0; }
+  ol { padding: 0; list-style: none; }
+  li { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin-top: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+  li .n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--warn); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; }
+  li .text { flex: 1; min-width: 0; }
+  li .reason { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  select, button, a.btn { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  button.primary, a.btn { display: inline-block; margin-top: 16px; background: var(--accent); border-color: var(--accent); color: #fff; text-decoration: none; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: wait; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Before You Post</h1>
+  <p class="sub">Find what your photo gives away, then remove it. Nothing is stored.</p>
+
+  <label class="pick">
+    <input id="photo" type="file" accept="image/*">
+    <strong>Choose a photo</strong>
+  </label>
+
+  <p id="status" class="notice" hidden></p>
+
+  <section id="review" hidden>
+    <div class="stage" id="stage"><img id="preview" alt="Your photo"></div>
+    <ol id="findings"></ol>
+    <button id="apply" class="primary">Make it safe</button>
+  </section>
+
+  <section id="result" hidden>
+    <div class="stage"><img id="clean" alt="Cleaned photo"></div>
+    <a id="download" class="btn" download="safe-photo.png">Download</a>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const ACTIONS = { erase: "Erase naturally", pixelate: "Pixelate", blur: "Blur", keep: "Keep" };
+let file = null, findings = [];
+
+function status(text, warn = false) {
+  $("status").hidden = !text;
+  $("status").textContent = text;
+  $("status").classList.toggle("warn", warn);
+}
+
+function el(tag, props = {}, ...children) {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+}
+
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", body });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  return r;
+}
+
+$("photo").onchange = async e => {
+  file = e.target.files[0];
+  if (!file) return;
+  $("review").hidden = $("result").hidden = true;
+  $("preview").src = URL.createObjectURL(file);
+  status("Looking for personal info…");
+  const body = new FormData();
+  body.append("photo", file);
+  try {
+    const data = await (await post("/api/detect", body)).json();
+    findings = data.findings;
+    render(data);
+  } catch (err) {
+    status("Could not check this photo: " + err.message, true);
+  }
+};
+
+function render({ findings, metadata, mock }) {
+  const notes = [];
+  if (mock) notes.push("Demo mode: findings are placeholders until the Meta API key is set.");
+  if (metadata.gps) notes.push("This file has GPS location data. It is always removed from the safe copy.");
+  else if (metadata.device) notes.push(`File metadata names the device (${metadata.device}). It is removed from the safe copy.`);
+  if (!findings.length) notes.push("No visible personal info found.");
+  status(notes.join(" "), metadata.gps);
+
+  // Model output is untrusted (a photo can contain crafted text), so it only ever goes in via textContent.
+  document.querySelectorAll(".box").forEach(b => b.remove());
+  $("findings").replaceChildren(...findings.map((f, i) => {
+    const [x0, y0, x1, y1] = f.box;
+    $("stage").append(el("div", { className: "box", style: `left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%` }, el("span", { textContent: i + 1 })));
+    const select = el("select", { "aria-label": `Action for ${f.label}` },
+      ...Object.entries(ACTIONS).map(([value, text]) => el("option", { value, textContent: text })));
+    select.value = f.suggested;
+    select.dataset.i = i;
+    return el("li", {},
+      el("span", { className: "n", textContent: i + 1 }),
+      el("div", { className: "text" }, el("strong", { textContent: f.label }), el("p", { className: "reason", textContent: f.reason })),
+      select);
+  }));
+  $("review").hidden = false;
+}
+
+$("apply").onclick = async () => {
+  const edits = [...$("findings").querySelectorAll("select")]
+    .filter(s => s.value !== "keep")
+    .map(s => ({ box: findings[s.dataset.i].box, label: findings[s.dataset.i].label, action: s.value }));
+  const body = new FormData();
+  body.append("photo", file);
+  body.append("edits", JSON.stringify(edits));
+  $("apply").disabled = true;
+  status("Removing…");
+  try {
+    const r = await post("/api/apply", body);
+    const url = URL.createObjectURL(await r.blob());
+    $("clean").src = $("download").href = url;
+    $("result").hidden = false;
+    status("Done. Location data and other file metadata were removed too.");
+    $("result").scrollIntoView({ behavior: "smooth" });
+  } catch (err) {
+    status("Could not edit this photo: " + err.message, true);
+  } finally {
+    $("apply").disabled = false;
+  }
+};
+</script>
+</body>
+</html>

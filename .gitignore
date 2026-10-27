@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+.env
+# private planning notes, not part of the submission
+PLAN.md

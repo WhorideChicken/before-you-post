@@ -1,0 +1,14 @@
+[project]
+name = "meta-hack"
+version = "0.1.0"
+description = "Find and remove personal info hidden in photos before you post them"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    "pillow",
+    "numpy",
+    "opencv-python-headless",
+    "openai",
+]
