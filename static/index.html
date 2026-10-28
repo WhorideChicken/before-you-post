@@ -97,6 +97,11 @@
   .switch input:checked + .track::after { transform: translateX(16px); }
   .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
   .switch input:disabled + .track { opacity: .6; }
+  .own.locked .drop, .own.locked .switch { opacity: .45; filter: grayscale(1); pointer-events: none; }
+  .code { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px;
+          border: 1px solid var(--accent); border-radius: 12px; background: var(--card); }
+  .code input { flex: 0 1 200px; font: 600 16px ui-monospace, Consolas, monospace; padding: 9px 12px; border-radius: 8px;
+                border: 1px solid var(--line); background: var(--bg); color: var(--fg); letter-spacing: .08em; }
   details.note summary { cursor: pointer; color: var(--muted); font-size: 14px; }
   details.note p { margin-top: 6px; }
   .notice { padding: 10px 12px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
@@ -301,9 +306,14 @@
     <h2>Check your own photo</h2>
     <p class="lede">One photo, or up to six from the same account: they are attacked together, so details that are
       harmless alone but give you away in combination count too.</p>
-    <p class="notice" id="live-off" hidden>Live runs open with the hackathon submission. Until then, the samples above
-      replay real runs of the agent.</p>
-    <div class="own" id="own-form">
+    <div class="own locked" id="own-form">
+      <p class="notice" id="live-off" hidden>Checking your own photos opens for the judging period. Until then, the
+        samples above replay real runs of the agent, recorded as they happened.</p>
+      <label class="code" id="code-wrap" hidden>
+        <span><b>Judges' code</b><br><span class="muted small">It's in the hackathon submission. The samples above need
+          no code.</span></span>
+        <input id="code" type="text" autocomplete="off" spellcheck="false" aria-label="Judges' code">
+      </label>
       <label class="drop spot" id="drop">
         <input id="photo" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple>
         <strong>Drop photos here, or choose</strong>
@@ -790,8 +800,19 @@ async function handle(e) {
   }
 }
 
+let running = false, server = { live: false, code: false };
+
+// Uploads stay locked while live runs are off, until a judges' code is typed when one is required, and during a run.
+function lockUpload() {
+  const locked = !server.live || (server.code && !$("code").value.trim());
+  $("own-form").classList.toggle("locked", locked);
+  $("photo").disabled = locked || running;
+}
+
 function busy(on) {
-  document.querySelectorAll(".samples button, #photo").forEach(b => b.disabled = on);
+  running = on;
+  document.querySelectorAll(".samples button").forEach(b => b.disabled = on);
+  lockUpload();
 }
 
 async function begin(srcs, request) {
@@ -882,6 +903,7 @@ function check(files) {
   const body = new FormData();
   files.forEach(f => body.append("photos", f));
   body.append("private", !$("private-wrap").hidden && $("private").checked);
+  body.append("code", $("code").value.trim());
   begin(files.map(f => URL.createObjectURL(f)), () => fetch("/api/run", { method: "POST", body }));
 }
 $("photo").onchange = e => { const files = [...e.target.files]; e.target.value = ""; check(files); };
@@ -890,13 +912,17 @@ drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add(
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); if (!$("photo").disabled) check(e.dataTransfer.files); });
 
+$("code").addEventListener("input", lockUpload);
+lockUpload();
 fetch("/api/status").then(r => r.json()).then(s => {
-  $("own-form").hidden = !s.live;
+  server = s;
   $("live-off").hidden = s.live;
+  $("code-wrap").hidden = !(s.live && s.code);
   $("private-wrap").hidden = !s.private;
   $("private-pill").hidden = !s.private;
   $("private").disabled = !s.standard;  // private mode is the only live mode on this server
-}).catch(() => {});
+  lockUpload();
+}).catch(() => { $("live-off").hidden = false; });
 
 $("samples").append(...SAMPLES.map(s => {
   const srcs = Array.from({ length: s.photos || 1 }, (_, i) => `samples/${s.name}-${i + 1}.jpg`);

@@ -1,5 +1,6 @@
 """HTTP layer. Stateless by design: photos live only in memory for the length of one request."""
 import functools
+import hmac
 import json
 import logging
 import os
@@ -25,6 +26,8 @@ RUNS_PER_DAY = int(os.environ.get("RUNS_PER_DAY", "30"))  # whole site: about $3
 STANDARD = meta.client is not None or os.environ.get("MOCK") == "1"
 PRIVATE = meta.open_client is not None
 LIVE = STANDARD or PRIVATE
+# Judges' code: when set, live runs need it, so the public page cannot spend the credits. Samples stay open.
+LIVE_CODE = os.environ.get("LIVE_CODE") or None
 log = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="Before You Post")
@@ -91,16 +94,20 @@ def ndjson(lines) -> StreamingResponse:
 
 @app.get("/api/status")
 def status():
-    return {"live": LIVE, "standard": STANDARD, "private": PRIVATE, "mock": meta.client is None}
+    return {"live": LIVE, "standard": STANDARD, "private": PRIVATE, "mock": meta.client is None, "code": LIVE_CODE is not None}
 
 
 @app.post("/api/run")
-async def run(request: Request, photos: list[UploadFile] = File(...), private: bool = Form(False)):
+async def run(request: Request, photos: list[UploadFile] = File(...), private: bool = Form(False),
+              code: str = Form("")):
     """Stream the agent's progress as NDJSON: attack, plan, edits, re-attack, done (with the final PNGs).
     Several photos are scanned as one account: attacked together, so combinations across them count.
     private: Muse Spark Open finds the clues and every edit runs here; nothing goes to Meta's API."""
     if not (PRIVATE if private else STANDARD):
         raise HTTPException(503, "This mode is switched off right now. The sample photos still work.")
+    # ponytail: no lockout on wrong codes; use a long random code, since each guess is a full upload anyway.
+    if LIVE_CODE and not hmac.compare_digest(code.encode(), LIVE_CODE.encode()):
+        raise HTTPException(403, "That judges' code doesn't match. The sample photos work without one.")
     if len(photos) > MAX_PHOTOS:
         raise HTTPException(413, f"At most {MAX_PHOTOS} photos at once")
     allow_live_run(request)

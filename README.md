@@ -86,7 +86,8 @@ Open http://localhost:8000. The sample gallery replays recorded runs and needs n
 |---|---|
 | `MODEL_API_KEY` | Standard mode: Muse Spark, SAM 3.1 and Muse Image on the Meta Model API |
 | `OPEN_API_KEY` | Private mode: Muse Spark Open on Baseten (`OPEN_MODEL`, default `meta-models/muse-spark-open-1026`) |
-| neither | Samples only. `MOCK=1` runs the whole loop offline with a placeholder attacker and OpenCV inpainting |
+| neither | Samples only, with the upload greyed out. `MOCK=1` runs the whole loop offline with a placeholder attacker and OpenCV inpainting |
+| `LIVE_CODE` | Live runs need this code (given to judges in the submission); the samples never do |
 | `RUNS_PER_HOUR`, `RUNS_PER_DAY` | Live run limits per visitor and for the whole site (defaults 4 and 30) |
 
 Live runs take JPEG, PNG or WebP up to 20 MB each, up to six at once, and run one at a time per server: the demo host

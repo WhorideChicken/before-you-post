@@ -10,6 +10,8 @@ services:
         sync: false
       - key: OPEN_API_KEY  # private mode (Muse Spark Open on Baseten); leave empty to keep it off
         sync: false
+      - key: LIVE_CODE  # judges' code: live runs need it; give it in the submission. Samples never do
+        sync: false
       - key: RUNS_PER_HOUR
         value: "4"
       - key: RUNS_PER_DAY
