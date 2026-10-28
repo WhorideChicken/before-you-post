@@ -4,7 +4,7 @@ A privacy red-team agent for your photos. It attacks a photo the way a determine
 edits that break every way to find you, makes them, and attacks again to check. It reports what a stranger could
 learn and how precisely, but is told never to print the names, addresses or numbers themselves.
 
-**Live demo: [before-you-post.onrender.com](https://before-you-post.onrender.com)**. The gallery replays recorded runs
+**Live demo: [before-you-post.onrender.com](https://before-you-post.onrender.com)** · **[3-minute video](https://youtu.be/HcLgyfB1kuc)**. The gallery replays recorded runs
 of the real agent; checking your own photos opens during judging. The free host sleeps when idle, so the first visit
 can take about a minute.
 
