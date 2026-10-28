@@ -1,0 +1,46 @@
+{
+ "id": "daniel",
+ "secrets": [
+  "Daniel",
+  "Fire Rescue",
+  "Lakeport"
+ ],
+ "verified": [
+  "Daniel",
+  "Fire Rescue",
+  "Lakeport"
+ ],
+ "single_seconds": 18.0,
+ "single_worst_before": [
+  1,
+  2,
+  3
+ ],
+ "single": {
+  "survived": [
+   "Daniel",
+   "Fire Rescue"
+  ],
+  "broken": true,
+  "edits": [
+   "pixelate:wooden welcome sign"
+  ],
+  "photos_changed": 1,
+  "changed": 0.0523
+ },
+ "account_seconds": 37.3,
+ "account_worst_before": 3,
+ "account_safe": true,
+ "account": {
+  "survived": [
+   "Fire Rescue"
+  ],
+  "broken": true,
+  "edits": [
+   "pixelate:welcome sign",
+   "pixelate:birthday cake"
+  ],
+  "photos_changed": 2,
+  "changed": 0.0877
+ }
+}

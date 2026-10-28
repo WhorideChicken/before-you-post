@@ -11,25 +11,22 @@
   "310 Oak Avenue",
   "4821"
  ],
- "seconds": 18.3,
+ "seconds": 24.6,
  "exposure_before": {
   "current_location": 4,
   "routine": 3,
-  "financial_or_id": 3,
+  "financial_or_id": 2,
   "other_people": 1
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "pixelate:restaurant receipt:box:pixelate",
   "pixelate:restaurant receipt:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1283,
- "survived_naive": [
-  "Blue Fern"
- ],
- "changed_naive": 0.4553
+ "changed_ours": 0.1184,
+ "survived_naive": [],
+ "changed_naive": 0.4649
 }

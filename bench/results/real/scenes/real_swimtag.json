@@ -7,26 +7,23 @@
  "verified": [
   "Riverton Swim Club"
  ],
- "seconds": 52.0,
+ "seconds": 69.7,
  "exposure_before": {
-  "routine": 3,
-  "current_location": 3
+  "routine": 3
  },
- "exposure_after": {
-  "routine": 1
- },
+ "exposure_after": {},
  "safe": true,
- "attacks": 3,
+ "attacks": 4,
  "edits": [
   "replace:swim bag tag:box:muse-image",
-  "pixelate:swim bag tag:box:pixelate",
-  "pixelate:order barcode:sam:pixelate"
+  "pixelate:printed barcode strip:sam:pixelate",
+  "pixelate:printed barcode strip:sam:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.3215,
+ "changed_ours": 0.3432,
  "survived_naive": [
   "Riverton Swim Club"
  ],
- "changed_naive": 0.8073
+ "changed_naive": 0.8006
 }

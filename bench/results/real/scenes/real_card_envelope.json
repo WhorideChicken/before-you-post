@@ -11,24 +11,29 @@
   "48213",
   "Lindenhof"
  ],
- "seconds": 53.7,
+ "seconds": 84.8,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
   "work_or_school": 3,
   "financial_or_id": 4
  },
- "exposure_after": {},
- "safe": true,
- "attacks": 3,
+ "exposure_after": {
+  "identity": 3
+ },
+ "safe": false,
+ "attacks": 4,
  "edits": [
   "replace:employee ID badge:sam:muse-image",
-  "replace:mailing address label:box:muse-image",
-  "pixelate:printed name label:box:pixelate"
+  "replace:shipping address label:box:muse-image",
+  "replace:screen name text:box:muse-image",
+  "pixelate:mailing label mockup:box:pixelate"
  ],
  "values_printed": [],
- "survived_ours": [],
- "changed_ours": 0.3846,
+ "survived_ours": [
+  "Hana Seo"
+ ],
+ "changed_ours": 0.4145,
  "survived_naive": [],
- "changed_naive": 0.8687
+ "changed_naive": 0.866
 }

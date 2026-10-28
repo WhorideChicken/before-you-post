@@ -9,7 +9,7 @@
   "Tom Becker",
   "9 Elm Row"
  ],
- "seconds": 32.1,
+ "seconds": 36.4,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
@@ -23,7 +23,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0522,
+ "changed_ours": 0.0648,
  "survived_naive": [],
- "changed_naive": 0.2263
+ "changed_naive": 0.1969
 }

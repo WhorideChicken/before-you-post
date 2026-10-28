@@ -3,17 +3,9 @@
  "kind": "control",
  "secrets": [],
  "verified": [],
- "seconds": 17.3,
- "exposure_before": {
-  "identity": 1,
-  "routine": 2,
-  "current_location": 2
- },
- "exposure_after": {
-  "identity": 1,
-  "routine": 2,
-  "current_location": 2
- },
+ "seconds": 15.4,
+ "exposure_before": {},
+ "exposure_after": {},
  "safe": true,
  "attacks": 1,
  "edits": [],
@@ -21,5 +13,5 @@
  "survived_ours": [],
  "changed_ours": 0.0,
  "survived_naive": [],
- "changed_naive": 0.0334
+ "changed_naive": 0.0458
 }

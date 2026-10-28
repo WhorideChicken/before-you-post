@@ -9,12 +9,11 @@
   "Lucas Ferreira",
   "55821"
  ],
- "seconds": 29.9,
+ "seconds": 30.8,
  "exposure_before": {
   "identity": 4,
-  "financial_or_id": 4,
   "current_location": 3,
-  "routine": 3
+  "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
@@ -24,7 +23,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0319,
+ "changed_ours": 0.0201,
  "survived_naive": [],
- "changed_naive": 0.128
+ "changed_naive": 0.1546
 }

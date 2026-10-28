@@ -9,24 +9,25 @@
   "1203",
   "별빛마을"
  ],
- "seconds": 35.8,
+ "seconds": 37.5,
  "exposure_before": {
-  "home_location": 4,
+  "home_location": 3
+ },
+ "exposure_after": {
   "work_or_school": 1
  },
- "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
   "replace:door number plate:box:muse-image",
-  "replace:apartment complex sign:box:muse-image"
+  "replace:complex name sign:box:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.2492,
+ "changed_ours": 0.2155,
  "survived_naive": [
   "1203",
   "별빛마을"
  ],
- "changed_naive": 0.4725
+ "changed_naive": 0.5034
 }

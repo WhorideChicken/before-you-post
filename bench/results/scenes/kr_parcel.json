@@ -8,25 +8,25 @@
  ],
  "verified": [
   "김하늘",
+  "솔내로 27",
   "010-2345-6789"
  ],
- "seconds": 24.8,
+ "seconds": 37.5,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
-  "contact": 4,
-  "financial_or_id": 4
+  "contact": 4
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:shipping label:box:muse-image",
-  "pixelate:door number plate:box:pixelate"
+  "replace:cardboard shipping label:sam:muse-image",
+  "pixelate:hallway door plate:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0288,
+ "changed_ours": 0.0208,
  "survived_naive": [],
- "changed_naive": 0.1814
+ "changed_naive": 0.172
 }

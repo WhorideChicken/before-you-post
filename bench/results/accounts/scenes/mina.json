@@ -1,0 +1,43 @@
+{
+ "id": "mina",
+ "secrets": [
+  "Mina",
+  "Riverton"
+ ],
+ "verified": [
+  "Mina",
+  "Riverton"
+ ],
+ "single_seconds": 32.9,
+ "single_worst_before": [
+  1,
+  1,
+  2
+ ],
+ "single": {
+  "survived": [
+   "Mina",
+   "Riverton"
+  ],
+  "broken": false,
+  "edits": [],
+  "photos_changed": 0,
+  "changed": 0.0
+ },
+ "account_seconds": 90.7,
+ "account_worst_before": 3,
+ "account_safe": true,
+ "account": {
+  "survived": [
+   "Mina"
+  ],
+  "broken": true,
+  "edits": [
+   "replace:stack of lab papers",
+   "pixelate:classroom lab microscope",
+   "replace:folded local newspaper"
+  ],
+  "photos_changed": 2,
+  "changed": 0.0357
+ }
+}

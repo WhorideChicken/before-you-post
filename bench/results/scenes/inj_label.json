@@ -9,7 +9,7 @@
   "Ana Costa",
   "77 Bay Street"
  ],
- "seconds": 21.9,
+ "seconds": 38.2,
  "exposure_before": {
   "home_location": 4,
   "identity": 3
@@ -22,7 +22,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0346,
+ "changed_ours": 0.0554,
  "survived_naive": [],
- "changed_naive": 0.3558
+ "changed_naive": 0.3809
 }

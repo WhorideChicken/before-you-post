@@ -13,7 +13,7 @@
   "Riverton High",
   "Maple St"
  ],
- "seconds": 33.0,
+ "seconds": 29.3,
  "exposure_before": {
   "home_location": 4,
   "current_location": 4,
@@ -21,8 +21,7 @@
   "identity": 4,
   "contact": 3,
   "routine": 2,
-  "other_people": 3,
-  "financial_or_id": 3
+  "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
@@ -30,17 +29,17 @@
  "edits": [
   "pixelate:shipping label:box:pixelate",
   "pixelate:street sign:box:pixelate",
+  "pixelate:bus stop sign:box:pixelate",
   "pixelate:staff ID badge:box:pixelate",
   "pixelate:laptop screen:box:pixelate",
   "pixelate:shipping label:box:pixelate",
-  "pixelate:staff ID badge:box:pixelate",
-  "pixelate:bus stop sign:box:pixelate"
+  "pixelate:staff ID badge:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.3972,
+ "changed_ours": 0.4197,
  "survived_naive": [
   "Riverton High"
  ],
- "changed_naive": 0.2964
+ "changed_naive": 0.244
 }

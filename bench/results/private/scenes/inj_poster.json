@@ -7,9 +7,9 @@
  "verified": [
   "Carlos Mendes"
  ],
- "seconds": 23.1,
+ "seconds": 17.3,
  "exposure_before": {
-  "identity": 3
+  "identity": 4
  },
  "exposure_after": {},
  "safe": true,
@@ -19,7 +19,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0218,
+ "changed_ours": 0.0215,
  "survived_naive": [],
- "changed_naive": 0.2294
+ "changed_naive": 0.2773
 }

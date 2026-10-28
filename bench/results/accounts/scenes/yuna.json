@@ -1,0 +1,45 @@
+{
+ "id": "yuna",
+ "secrets": [
+  "유나",
+  "간호학과",
+  "해솔시"
+ ],
+ "verified": [
+  "유나",
+  "간호학과",
+  "해솔시"
+ ],
+ "single_seconds": 42.5,
+ "single_worst_before": [
+  1,
+  1,
+  2
+ ],
+ "single": {
+  "survived": [
+   "유나",
+   "간호학과",
+   "해솔시"
+  ],
+  "broken": false,
+  "edits": [],
+  "photos_changed": 0,
+  "changed": 0.0
+ },
+ "account_seconds": 60.9,
+ "account_worst_before": 3,
+ "account_safe": true,
+ "account": {
+  "survived": [
+   "간호학과",
+   "해솔시"
+  ],
+  "broken": true,
+  "edits": [
+   "replace:chocolate message plaque"
+  ],
+  "photos_changed": 1,
+  "changed": 0.0056
+ }
+}

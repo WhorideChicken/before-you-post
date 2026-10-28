@@ -9,25 +9,22 @@
   "Meridian",
   "Pine"
  ],
- "seconds": 51.0,
+ "seconds": 24.5,
  "exposure_before": {
-  "current_location": 4,
-  "home_location": 3
+  "home_location": 4
  },
  "exposure_after": {
-  "current_location": 2,
-  "home_location": 2
+  "current_location": 2
  },
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:rooftop hotel sign:sam:muse-image",
-  "replace:street name signs:sam:muse-image",
-  "pixelate:opposite hotel building:sam:pixelate"
+  "pixelate:rooftop hotel sign:sam:pixelate",
+  "pixelate:street intersection sign:sam:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1633,
+ "changed_ours": 0.0134,
  "survived_naive": [],
- "changed_naive": 0.3051
+ "changed_naive": 0.3485
 }

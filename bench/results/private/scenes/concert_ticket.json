@@ -9,13 +9,12 @@
   "Lindqvist",
   "88304412"
  ],
- "seconds": 18.6,
+ "seconds": 17.2,
  "exposure_before": {
   "identity": 4,
-  "current_location": 4,
+  "current_location": 3,
   "routine": 3,
-  "financial_or_id": 4,
-  "other_people": 3
+  "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
@@ -25,7 +24,9 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1416,
- "survived_naive": [],
- "changed_naive": 0.1063
+ "changed_ours": 0.1425,
+ "survived_naive": [
+  "88304412"
+ ],
+ "changed_naive": 0.0751
 }

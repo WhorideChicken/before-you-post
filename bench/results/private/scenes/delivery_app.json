@@ -9,22 +9,23 @@
   "Birch Street",
   "Jonas Weber"
  ],
- "seconds": 17.3,
+ "seconds": 16.4,
  "exposure_before": {
   "home_location": 4,
   "identity": 4,
   "routine": 3,
-  "financial_or_id": 3
+  "financial_or_id": 2
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
+  "pixelate:smartphone screen:box:pixelate",
   "pixelate:smartphone screen:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1611,
+ "changed_ours": 0.167,
  "survived_naive": [],
- "changed_naive": 0.0998
+ "changed_naive": 0.0917
 }

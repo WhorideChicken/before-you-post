@@ -9,26 +9,27 @@
   "Northgate Elementary",
   "Emma"
  ],
- "seconds": 20.5,
+ "seconds": 21.6,
  "exposure_before": {
-  "work_or_school": 3,
   "identity": 3,
+  "work_or_school": 3,
   "routine": 3,
   "other_people": 2
  },
  "exposure_after": {
+  "identity": 2,
   "other_people": 2,
   "routine": 1
  },
  "safe": true,
  "attacks": 2,
  "edits": [
-  "pixelate:lined notepaper note:box:pixelate",
-  "pixelate:small sticky note:box:pixelate"
+  "pixelate:handwritten note:box:pixelate",
+  "pixelate:handwritten note:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0569,
+ "changed_ours": 0.0541,
  "survived_naive": [],
- "changed_naive": 0.2962
+ "changed_naive": 0.297
 }

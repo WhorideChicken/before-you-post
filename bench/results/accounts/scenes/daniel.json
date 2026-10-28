@@ -1,0 +1,45 @@
+{
+ "id": "daniel",
+ "secrets": [
+  "Daniel",
+  "Fire Rescue",
+  "Lakeport"
+ ],
+ "verified": [
+  "Daniel",
+  "Fire Rescue",
+  "Lakeport"
+ ],
+ "single_seconds": 39.5,
+ "single_worst_before": [
+  1,
+  1,
+  2
+ ],
+ "single": {
+  "survived": [
+   "Daniel",
+   "Fire Rescue",
+   "Lakeport"
+  ],
+  "broken": false,
+  "edits": [],
+  "photos_changed": 0,
+  "changed": 0.0
+ },
+ "account_seconds": 144.6,
+ "account_worst_before": 3,
+ "account_safe": true,
+ "account": {
+  "survived": [
+   "Daniel",
+   "Fire Rescue"
+  ],
+  "broken": true,
+  "edits": [
+   "replace:town welcome sign"
+  ],
+  "photos_changed": 1,
+  "changed": 0.0208
+ }
+}

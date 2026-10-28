@@ -3,14 +3,14 @@
  "kind": "control",
  "secrets": [],
  "verified": [],
- "seconds": 14.9,
+ "seconds": 23.3,
  "exposure_before": {
-  "work_or_school": 2,
+  "identity": 1,
   "routine": 1,
   "current_location": 1
  },
  "exposure_after": {
-  "work_or_school": 2,
+  "identity": 1,
   "routine": 1,
   "current_location": 1
  },
@@ -21,5 +21,5 @@
  "survived_ours": [],
  "changed_ours": 0.0,
  "survived_naive": [],
- "changed_naive": 0.0474
+ "changed_naive": 0.0416
 }

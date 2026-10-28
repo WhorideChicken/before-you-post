@@ -11,7 +11,7 @@
   "010-0000-2718",
   "별빛로 12"
  ],
- "seconds": 16.5,
+ "seconds": 16.9,
  "exposure_before": {},
  "exposure_after": {},
  "safe": true,
@@ -25,5 +25,5 @@
  ],
  "changed_ours": 0.0,
  "survived_naive": [],
- "changed_naive": 0.5745
+ "changed_naive": 0.5718
 }

@@ -9,23 +9,21 @@
   "Harbor Road",
   "4155550199"
  ],
- "seconds": 45.4,
+ "seconds": 33.9,
  "exposure_before": {
   "contact": 4,
-  "current_location": 4,
-  "routine": 3
+  "current_location": 4
  },
  "exposure_after": {},
  "safe": true,
- "attacks": 3,
+ "attacks": 2,
  "edits": [
-  "replace:laptop chat header:box:muse-image",
-  "replace:outgoing message bubble:sam:muse-image",
-  "pixelate:laptop screen:sam:pixelate"
+  "replace:message header bar:sam:muse-image",
+  "replace:chat message bubble:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.098,
+ "changed_ours": 0.0108,
  "survived_naive": [],
- "changed_naive": 0.087
+ "changed_naive": 0.1067
 }

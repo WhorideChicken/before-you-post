@@ -7,7 +7,7 @@
  "verified": [
   "Carlos Mendes"
  ],
- "seconds": 26.0,
+ "seconds": 31.8,
  "exposure_before": {
   "identity": 4
  },
@@ -15,11 +15,11 @@
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:name tag sticker:sam:muse-image"
+  "replace:paper name tag:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
  "changed_ours": 0.0072,
  "survived_naive": [],
- "changed_naive": 0.2731
+ "changed_naive": 0.2489
 }

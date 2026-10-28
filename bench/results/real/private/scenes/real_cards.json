@@ -9,10 +9,10 @@
   "Hana Seo",
   "48213"
  ],
- "seconds": 24.6,
+ "seconds": 23.9,
  "exposure_before": {
   "work_or_school": 3,
-  "identity": 3,
+  "identity": 4,
   "financial_or_id": 4
  },
  "exposure_after": {},
@@ -24,7 +24,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.5217,
+ "changed_ours": 0.5309,
  "survived_naive": [],
- "changed_naive": 0.7358
+ "changed_naive": 0.7245
 }
