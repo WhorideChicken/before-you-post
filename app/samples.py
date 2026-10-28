@@ -19,14 +19,14 @@ PRIVATE = {"desk_private"}  # recorded in private mode: Muse Spark Open, edits o
 SPEEDUP = 4
 
 
-async def replay(name: str, first: str = ""):
-    """Yield `first`, then the recorded NDJSON lines, paced like the real run but SPEEDUP times faster.
+async def replay(name: str, first: str = "", speed: float = SPEEDUP):
+    """Yield `first`, then the recorded NDJSON lines, paced like the real run but `speed` times faster.
     Async so a replay waits without holding one of the server's worker threads."""
     yield first
     prev = 0.0
     for line in (SAMPLES / f"{name}.ndjson").read_text(encoding="utf-8").splitlines():
         t = json.loads(line)["t"]
-        await asyncio.sleep(min(max(t - prev, 0.0) / SPEEDUP, 5.0))
+        await asyncio.sleep(min(max(t - prev, 0.0) / speed, 30.0 / speed))
         prev = t
         yield line + "\n"
 

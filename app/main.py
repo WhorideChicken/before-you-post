@@ -128,12 +128,13 @@ async def run(request: Request, photos: list[UploadFile] = File(...), private: b
 
 
 @app.get("/api/sample/{name}")
-def sample(name: str):
-    """Replay a recorded run of one of the gallery photos, sped up."""
+def sample(name: str, speed: float = samples.SPEEDUP):
+    """Replay a recorded run of one of the gallery photos, sped up (1-8x; the demo video paces it to the narration)."""
     if name not in samples.SOURCES:
         raise HTTPException(404, "No such sample")
-    start = {"type": "start", "metadata": [], "mock": False, "replay": samples.SPEEDUP, "private": name in samples.PRIVATE}
-    return ndjson(samples.replay(name, json.dumps(start) + "\n"))
+    speed = min(max(speed, 1.0), 8.0)
+    start = {"type": "start", "metadata": [], "mock": False, "replay": speed, "private": name in samples.PRIVATE}
+    return ndjson(samples.replay(name, json.dumps(start) + "\n", speed))
 
 
 app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "static", html=True), name="static")

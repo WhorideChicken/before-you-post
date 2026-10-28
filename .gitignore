@@ -4,6 +4,7 @@ __pycache__/
 # private planning notes, not part of the submission
 PLAN.md
 VIDEO.md
+video/
 # LeakBench outputs that are regenerated on every run
 bench/results/**/images/
 bench/results/run*.log
