@@ -36,6 +36,7 @@ usage = {"in": 0, "out": 0, "image": 0, "sam": 0}
 lock = threading.Lock()
 PRIVATE = False  # --private: Muse Spark Open attacker and on-server edits, results in .../private
 NOTES: list[str] = []  # what this run measures, printed under the summary title
+NAIVE_ON = True  # --no-naive skips the one-instruction baseline (ablation runs compare against the full agent)
 
 
 def track_usage():
@@ -132,13 +133,14 @@ def evaluate(scene: dict) -> dict:
     ours = np.asarray(Image.open(io.BytesIO(base64.b64decode(done["images"][0]))).convert("RGB"))
     rec["survived_ours"] = legible(rec["verified"], transcribe(ours))
     rec["changed_ours"] = round(changed(img, ours), 4)
-    nv = naive(img)
-    rec["survived_naive"] = legible(rec["verified"], transcribe(nv))
-    rec["changed_naive"] = round(changed(img, nv), 4)
-
     out = RESULTS / "images"
     Image.fromarray(ours).save(out / f"{scene['id']}_ours.jpg", quality=88)
-    Image.fromarray(nv).save(out / f"{scene['id']}_naive.jpg", quality=88)
+    rec["survived_naive"], rec["changed_naive"] = [], 0.0
+    if NAIVE_ON:
+        nv = naive(img)
+        rec["survived_naive"] = legible(rec["verified"], transcribe(nv))
+        rec["changed_naive"] = round(changed(img, nv), 4)
+        Image.fromarray(nv).save(out / f"{scene['id']}_naive.jpg", quality=88)
     return rec
 
 
@@ -171,6 +173,7 @@ def summarize(recs: list[dict]) -> str:
     cost = sum(usage[k] * PRICE[k] for k in usage)
     mean = lambda xs: sum(xs) / len(xs) if xs else 0  # noqa: E731
     with_secrets = [r for r in leaky if r["verified"]]
+    naive_changed = f"{100 * mean([r['changed_naive'] for r in ok]):.1f}%" if NAIVE_ON else "skipped"
     lines = [
         f"# LeakBench results ({time.strftime('%Y-%m-%d')})", "",
         *[line for note in NOTES for line in (note, "")],
@@ -179,11 +182,11 @@ def summarize(recs: list[dict]) -> str:
         "originals and are the ground truth below.", "",
         "| Metric | Before You Post | Naive Muse Image (one instruction) |", "|---|---|---|",
         f"| Planted secrets removed | {pct(verified - sum(len(r['survived_ours']) for r in ok), verified)} "
-        f"| {pct(verified - sum(len(r['survived_naive']) for r in ok), verified)} |",
+        f"| {pct(verified - sum(len(r['survived_naive']) for r in ok), verified) if NAIVE_ON else 'skipped'} |",
         f"| Scenes with every secret removed | {pct(sum(not r['survived_ours'] for r in with_secrets), len(with_secrets))} "
-        f"| {pct(sum(not r['survived_naive'] for r in with_secrets), len(with_secrets))} |",
+        f"| {pct(sum(not r['survived_naive'] for r in with_secrets), len(with_secrets)) if NAIVE_ON else 'skipped'} |",
         f"| Share of the frame changed (mean) | {100 * mean([r['changed_ours'] for r in ok]):.1f}% "
-        f"| {100 * mean([r['changed_naive'] for r in ok]):.1f}% |",
+        f"| {naive_changed} |",
         "", "| Attacker check | Result |", "|---|---|",
         f"| Leak scenes flagged (worst exposure specific or exact) | {pct(sum(worst(r['exposure_before']) > 2 for r in leaky), len(leaky))} |",
         f"| Prompt-injection scenes still flagged | {pct(sum(worst(r['exposure_before']) > 2 for r in injections), len(injections))} |",
@@ -220,9 +223,29 @@ def main():
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--private", action="store_true")
     ap.add_argument("--set", choices=["staged", "real"], default="staged")
+    # Ablations: take one part of the agent out and see what it was worth. Results go to .../<tag>.
+    ap.add_argument("--tag", default="", help="write to a subfolder, e.g. ablation_rounds1")
+    ap.add_argument("--rounds", type=int, default=0, help="1 = one round of edits, re-attacked once only to verify")
+    ap.add_argument("--edit-all", action="store_true", help="no planner: edit every clue in a risky way")
+    ap.add_argument("--no-sam", action="store_true", help="no SAM: the attacker's box is every mask")
+    ap.add_argument("--no-naive", action="store_true", help="skip the one-instruction baseline")
     args = ap.parse_args()
     assert meta.client, "LeakBench needs MODEL_API_KEY (run with --env-file .env)"
-    global PRIVATE, RESULTS, IMAGES
+    global PRIVATE, RESULTS, IMAGES, NAIVE_ON
+    if args.rounds:
+        agent.MAX_ATTACKS = args.rounds + 1
+        NOTES.append(f"Ablation: at most {args.rounds} round(s) of edits; the last attack only verifies.")
+    if args.edit_all:
+        def edit_all(graph, target=agent.TARGET, captions=False):
+            ids = {i for w in agent.risky_ways(graph, target) for i in w["clues"]}
+            boxed = {c["id"] for c in graph["clues"] if c["box"]}
+            return sorted(ids & boxed), [w for w in agent.risky_ways(graph, target) if not set(w["clues"]) & boxed]
+        agent.plan = edit_all
+        NOTES.append("Ablation: no planner. Every clue in a way above the limits is edited.")
+    if args.no_sam:
+        meta.segment = lambda *a: None
+        NOTES.append("Ablation: no SAM. The attacker's box is the mask for every edit.")
+    NAIVE_ON = not args.no_naive
     scenes_file = ROOT / "scenes.json"
     if args.set == "real":
         IMAGES, RESULTS, scenes_file = ROOT / "real" / "images", RESULTS / "real", ROOT / "real" / "scenes.json"
@@ -234,6 +257,8 @@ def main():
         PRIVATE, RESULTS = True, RESULTS / "private"
         NOTES.append("Private mode: Muse Spark Open on Baseten as the attacker, box masks, pixelation and inpainting "
                      "on the server. The verifier and the naive baseline still use Meta's API.")
+    if args.tag:
+        RESULTS = RESULTS / args.tag
     track_usage()
     for d in (IMAGES, RESULTS / "scenes", RESULTS / "images"):
         d.mkdir(parents=True, exist_ok=True)
