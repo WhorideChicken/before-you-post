@@ -1,0 +1,21 @@
+{
+  "name": "Before You Post",
+  "short_name": "Before You Post",
+  "description": "A privacy red-team agent: it attacks your photo the way a stranger would and removes only what gives you away.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0d0e12",
+  "theme_color": "#0d0e12",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": { "files": [{ "name": "photos", "accept": ["image/jpeg", "image/png", "image/webp"] }] }
+  }
+}

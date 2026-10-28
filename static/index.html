@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Before You Post</title>
 <meta name="description" content="A privacy red-team agent: it attacks your photo the way a stranger would, removes only what gives you away, and attacks again to check.">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0e12" media="(prefers-color-scheme: dark)">
 <style>
   :root { --bg: #f7f7f8; --fg: #16161a; --muted: #5f6068; --card: #fff; --line: #dddde3; --accent: #0866ff; --warn: #c2410c; --ok: #15803d;
           --on-ok: #fff; --on-level: #fff; --l1: #64748b; --l2: #a16207; --l3: #c2410c; --l4: #dc2626; --scan-rgb: 8, 102, 255; --pixel: #16161a; }
@@ -67,7 +72,7 @@
   .proof a { font-size: 14px; }
 
   /* Samples: Spotlight Card */
-  .samples { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; margin-top: 16px; }
+  .samples { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 40vw), 1fr)); gap: 12px; margin-top: 16px; }
   .samples button { padding: 0; overflow: hidden; text-align: left; display: block; border-radius: 12px; }
   .samples .thumbs { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 3 / 2; }
   .samples img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -97,7 +102,7 @@
   .switch input:checked + .track::after { transform: translateX(16px); }
   .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
   .switch input:disabled + .track { opacity: .6; }
-  .own.locked .drop, .own.locked .switch { opacity: .45; filter: grayscale(1); pointer-events: none; }
+  .own.locked .drop, .own.locked .switch, .own.locked #shared { opacity: .45; filter: grayscale(1); pointer-events: none; }
   .code { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px;
           border: 1px solid var(--accent); border-radius: 12px; background: var(--card); }
   .code input { flex: 0 1 200px; font: 600 16px ui-monospace, Consolas, monospace; padding: 9px 12px; border-radius: 8px;
@@ -140,7 +145,8 @@
   .many .badge, .many .alone { padding: 2px 8px; font-size: 11px; }
   .many .badge { top: 6px; right: 6px; }
   .badge.ok { background: var(--ok); color: var(--on-ok); }
-  .box { position: absolute; border: 2px solid var(--c); border-radius: 4px; animation: pop .35s ease-out backwards; transition: opacity .2s, box-shadow .2s; }
+  .box { position: absolute; border: 2px solid var(--c); border-radius: 4px; animation: pop .35s ease-out backwards;
+         transition: opacity .2s, box-shadow .2s, left .5s ease, top .5s ease, width .5s ease, height .5s ease; }
   .box.fixed { --c: var(--ok); }
   .box span { position: absolute; top: -2px; left: -2px; padding: 0 6px; line-height: 1.5; font-size: 12px; font-weight: 700; color: var(--on-level); background: var(--c); border-radius: 4px 0 4px 0; }
   .box.fixed span { color: var(--on-ok); }
@@ -216,7 +222,7 @@
   ol.log ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
   footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
   footer nav { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
-  .sparks { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+  .sparks { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
   @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }
   [hidden] { display: none !important; }
 </style>
@@ -252,9 +258,9 @@
       <li><b>Re-attack</b><code>Muse Spark</code><br><span class="muted small">Attacks the result and repeats until nothing specific is left.</span></li>
     </ol>
     <div class="proof" aria-label="LeakBench results">
-      <div><strong><span class="count" data-to="41">41</span>/41</strong><span class="muted small">planted secrets removed across 24 staged photos</span></div>
-      <div><strong><span class="count" data-to="8">8</span>%</strong><span class="muted small">of the photo changed, against 22% for a one-shot repaint that removes as much</span></div>
-      <div><strong><span class="count" data-to="0">0</span>/33</strong><span class="muted small">secret values echoed in the attacker's reports</span></div>
+      <div><strong><span class="count" data-to="42">42</span>/42</strong><span class="muted small">planted secrets removed across 24 staged photos</span></div>
+      <div><strong><span class="count" data-to="5">5</span>%</strong><span class="muted small">of the photo changed. A one-shot repaint changed 23% and still missed 3</span></div>
+      <div><strong><span class="count" data-to="5">5</span>/5</strong><span class="muted small">accounts where name, job and town sat in separate posts were broken when checked together; 2/5 one photo at a time</span></div>
       <div><strong>4</strong><span class="muted small">Meta models, plus Muse Spark Open for private mode. <a href="https://github.com/WhorideChicken/before-you-post#leakbench">How we measured</a></span></div>
     </div>
   </div>
@@ -319,6 +325,7 @@
         <strong>Drop photos here, or choose</strong>
         <span class="muted small">JPEG, PNG or WebP, up to 20 MB each</span>
       </label>
+      <button class="btn primary" id="shared" type="button" hidden></button>
       <label class="switch" id="private-wrap" hidden>
         <input type="checkbox" id="private" role="switch" checked><span class="track" aria-hidden="true"></span>
         <span><b>Private mode</b><br><span class="muted small">Nothing goes to Meta's API: Muse Spark Open, Meta's open-weight
@@ -360,11 +367,13 @@ const ALLOWED = { contact: 1, financial_or_id: 1 };  // mirrors agent.STRICT; ev
 const ACTION = { erase: "Erased", replace: "Replaced with a blank version", pixelate: "Pixelated", blur: "Blurred" };
 const SAMPLES = [
   { name: "desk", label: "Home desk", note: "Label, badge, screen, street sign" },
-  { name: "front_door", label: "Front door", note: "House number and street" },
-  { name: "kr_parcel", label: "Korean parcel", note: "Shipping label, door plate" },
-  { name: "inj_poster", label: "Prompt injection", note: "A poster tells the AI to lie" },
+  { name: "kr_market", label: "Secondhand listing", note: "Address on the box behind it" },
+  { name: "kr_school", label: "First day of school", note: "Child's name, school and class" },
+  { name: "kr_moving", label: "Moving day", note: "Door code, a landmark tower" },
   { name: "account", label: "One account", note: "3 posts, safe alone, not together", photos: 3 },
+  { name: "inj_poster", label: "Prompt injection", note: "A poster tells the AI to lie" },
   { name: "desk_private", label: "Private mode", note: "Same desk, nothing sent to Meta" },
+  { name: "front_door", label: "Front door", note: "House number and street" },
 ];
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
@@ -481,7 +490,8 @@ document.body.append(sparks);
 function spark(x, y) {
   if (calm) return;
   const ctx = sparks.getContext("2d"), dpr = Math.min(devicePixelRatio || 1, 2), start = performance.now();
-  sparks.width = innerWidth * dpr; sparks.height = innerHeight * dpr;
+  const root = document.documentElement;
+  sparks.width = root.clientWidth * dpr; sparks.height = root.clientHeight * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const color = getComputedStyle(document.documentElement).getPropertyValue("--accent");
   const frame = now => {
@@ -753,6 +763,14 @@ async function handle(e) {
       step("check", "active", `round ${e.round} · worst ${LEVEL[top]}`);
       settle(e.exposure, g);
     }
+  } else if (e.type === "outlines") {
+    // The attacker's boxes are estimates; SAM's outlines are where the objects really are.
+    for (const [id, o] of Object.entries(e.outlines)) {
+      const b = boxes.get(id);
+      if (b) Object.assign(b.style, { left: `${o[0] * 100}%`, top: `${o[1] * 100}%`,
+                                      width: `${(o[2] - o[0]) * 100}%`, height: `${(o[3] - o[1]) * 100}%` });
+    }
+    log(`${e.model || "SAM 3.1"} outlined ${plural(Object.keys(e.outlines).length, "clue")} on the photo`);
   } else if (e.type === "plan") {
     statusText = privateRun ? "Pixelating and inpainting on this server" : "Editing with SAM 3.1 masks and Muse Image";
     const edits = e.text.match(/with (\d+) edit/)?.[1];
@@ -770,7 +788,7 @@ async function handle(e) {
     step("edit", "done", `${clock()} · ${plural(e.edits.length, "edit")}${e.round > 1 ? ` · round ${e.round}` : ""}`);
     step("check", "active", `round ${e.round + 1}`);
     log("Edits", e.edits.map(d => `${ACTION[d.action]}: ${d.label}${originals.length > 1 ? ` in photo ${d.photo + 1}` : ""} ` +
-                                 `(${d.mask === "sam" ? "SAM 3.1 mask" : "box mask"}, ${d.engine})`));
+                                 `(${{ sam: "SAM 3.1 mask", sam3: "SAM 3 mask" }[d.mask] || "box mask"}, ${d.engine})`));
   } else if (e.type === "done") {
     clearInterval(timer);
     scanning(false);
@@ -782,6 +800,14 @@ async function handle(e) {
     $("downloads").replaceChildren(...urls.map((href, i) => el("a", { className: "btn primary spark", href,
       download: urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png",
       textContent: urls.length > 1 ? `Download photo ${i + 1}` : "Download safe copy" })));
+    // On phones the safe copy can go straight to the share sheet (Instagram, KakaoTalk...). Files are built now,
+    // since Safari only allows share() right inside the tap.
+    const mine = originals;
+    if (navigator.canShare) Promise.all(urls.map(async (u, i) => new File([await (await fetch(u)).blob()],
+      urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png", { type: "image/png" })))
+      .then(files => originals === mine && navigator.canShare({ files }) && $("downloads").append(el("button", {
+        className: "btn", type: "button", textContent: urls.length > 1 ? "Share safe copies" : "Share safe copy",
+        onclick: () => navigator.share({ files }).catch(() => {}) }))).catch(() => {});
     settle(e.after);
     $("stamp").replaceChildren(el("span", { className: e.safe ? "shiny" : "", textContent: e.unverified ? "Unchecked" : !e.safe ? "Exposed" : checked ? "Verified" : "Clean" }));
     $("stamp").classList.toggle("ok", e.safe);
@@ -806,7 +832,7 @@ let running = false, server = { live: false, code: false };
 function lockUpload() {
   const locked = !server.live || (server.code && !$("code").value.trim());
   $("own-form").classList.toggle("locked", locked);
-  $("photo").disabled = locked || running;
+  $("photo").disabled = $("shared").disabled = locked || running;
 }
 
 function busy(on) {
@@ -923,6 +949,26 @@ fetch("/api/status").then(r => r.json()).then(s => {
   $("private").disabled = !s.standard;  // private mode is the only live mode on this server
   lockUpload();
 }).catch(() => { $("live-off").hidden = false; });
+
+// Photos shared from another app arrive through sw.js and wait on the device until Check is tapped.
+async function takeShared() {
+  const n = +new URLSearchParams(location.search).get("shared");
+  if (!n || !self.caches) return;
+  history.replaceState(null, "", location.pathname + location.hash);
+  const cache = await caches.open("shared");
+  const files = (await Promise.all(Array.from({ length: n }, async (_, i) => {
+    const r = await cache.match(`/shared/${i}`);
+    return r && new File([await r.blob()], decodeURIComponent(r.headers.get("x-name") || `photo-${i + 1}`),
+                         { type: r.headers.get("content-type") || "image/jpeg" });
+  }))).filter(Boolean);
+  await caches.delete("shared");
+  if (!files.length) return;
+  $("shared").textContent = `Check the ${plural(files.length, "shared photo")}`;
+  $("shared").onclick = () => check(files);
+  $("shared").hidden = false;
+}
+takeShared();
+navigator.serviceWorker?.register("/sw.js");
 
 $("samples").append(...SAMPLES.map(s => {
   const srcs = Array.from({ length: s.photos || 1 }, (_, i) => `samples/${s.name}-${i + 1}.jpg`);

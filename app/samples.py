@@ -12,9 +12,10 @@ from pathlib import Path
 SAMPLES = Path(__file__).parent.parent / "static" / "samples"
 BENCH = Path(__file__).parent.parent / "bench" / "images"
 # sample name -> LeakBench photos, served as static/samples/{name}-{1..n}.jpg. Several photos = one account scan.
-SOURCES = {"desk": ["desk_parcel"], "front_door": ["front_door"], "kr_parcel": ["kr_parcel"],
+SOURCES = {"desk": ["desk_parcel"], "front_door": ["front_door"],
            "inj_poster": ["inj_poster"], "account": ["acct_cup", "acct_class", "acct_town"],
-           "desk_private": ["desk_parcel"]}
+           "desk_private": ["desk_parcel"], "kr_market": ["kr_market"], "kr_school": ["kr_school"],
+           "kr_moving": ["kr_moving"]}
 PRIVATE = {"desk_private"}  # recorded in private mode: Muse Spark Open, edits on the server
 SPEEDUP = 4
 
