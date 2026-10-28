@@ -608,14 +608,19 @@ function drawBoxes(g) {
 
 // Account scan: the most each photo gives away on its own, and what the ways across photos reach together.
 function aloneAndTogether(g) {
-  const alone = originals.map(() => 0);
-  let together = 0;
+  const alone = originals.map(() => 0), best = {}, joint = {};
   for (const inf of g.inferences) for (const w of inf.ways) {
-    const photos = new Set(w.clues.map(id => clues[id].photo));
-    if (photos.size === 1) { const [p] = photos; alone[p] = Math.max(alone[p], w.level); }
-    together = Math.max(together, w.level);
+    const photos = new Set(w.clues.map(id => clues[id].photo)), c = inf.category;
+    if (photos.size === 1) {
+      const [p] = photos;
+      alone[p] = Math.max(alone[p], w.level);
+      best[c] = Math.max(best[c] || 0, w.level);
+    } else joint[c] = Math.max(joint[c] || 0, w.level);
   }
-  return [alone, together];
+  // The category that combining posts sharpens the most, beyond any single photo's way to it.
+  const up = c => joint[c] - (best[c] || 0);
+  const gain = Object.keys(joint).filter(c => up(c) > 0).sort((a, b) => up(b) - up(a) || joint[b] - joint[a])[0];
+  return [alone, gain && { category: gain, alone: best[gain] || 0, together: joint[gain] }];
 }
 
 // Light up clues and draw a line from each to the report row it feeds. pairs: [[clue id, row element], ...]
@@ -684,11 +689,11 @@ async function reveal(g) {
   drawBoxes(g);
   $("summary").textContent = g.summary;
   if (originals.length > 1) {
-    const [alone, together] = aloneAndTogether(g), most = Math.max(...alone);
+    const [alone, gain] = aloneAndTogether(g);
     stages().forEach((s, i) => Object.assign(s.querySelector(".alone"), { hidden: false, textContent: `Alone: ${LEVEL[alone[i]]}` }));
-    $("together").textContent = together > most
-      ? `On its own, no photo gives away more than "${LEVEL[most]}". Together they reach "${LEVEL[together]}".`
-      : `Photos checked together. The worst single photo already reaches "${LEVEL[most]}".`;
+    $("together").textContent = gain
+      ? `${CATEGORY[gain.category]}: no single photo gives away more than "${LEVEL[gain.alone]}". Together they reach "${LEVEL[gain.together]}".`
+      : "Photos checked together. Nothing here is worse in combination than in a single photo.";
     $("together").hidden = false;
   }
   $("rows").replaceChildren();
@@ -878,10 +883,12 @@ async function handle(e) {
 // (Instagram, KakaoTalk...). Files are built now, since Safari only allows share() right inside the tap.
 function offer(urls) {
   const name = i => urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png";
-  $("downloads").replaceChildren(...urls.map((href, i) => el("a", { className: "btn primary spark", href, download: name(i),
+  // In an account, only the photos that changed need a new copy; the rest are as posted.
+  const which = urls.map((u, i) => i).filter(i => urls.length === 1 || touched.has(i) || urls[i] !== finals[i]);
+  $("downloads").replaceChildren(...which.map(i => el("a", { className: "btn primary spark", href: urls[i], download: name(i),
     textContent: urls.length > 1 ? `Download photo ${i + 1}` : "Download safe copy" })));
   const mine = originals;
-  if (navigator.canShare) Promise.all(urls.map(async (u, i) => new File([await (await fetch(u)).blob()], name(i), { type: "image/png" })))
+  if (navigator.canShare) Promise.all(which.map(async i => new File([await (await fetch(urls[i])).blob()], name(i), { type: "image/png" })))
     .then(files => originals === mine && navigator.canShare({ files }) && $("downloads").append(el("button", {
       className: "btn", type: "button", textContent: urls.length > 1 ? "Share safe copies" : "Share safe copy",
       onclick: () => navigator.share({ files }).catch(() => {}) }))).catch(() => {});
@@ -953,9 +960,12 @@ function givesBack(kept) {
 
 // Captions as they will be posted, one per captioned photo: what the agent took out is struck through below each.
 function showCaptions(final = false) {
-  const items = captionsWas.map((was, i) => [was, captionsNow[i] ?? was, i]).filter(([was]) => was);
-  $("cap").hidden = !items.length;
-  $("cap-title").textContent = items.length > 1 ? "Captions" : "Caption";
+  const all = captionsWas.map((was, i) => [was, captionsNow[i] ?? was, i]).filter(([was]) => was);
+  // Many captions: list only the ones that changed, and say how many were checked.
+  const items = all.length > 3 ? all.filter(([was, now]) => was !== now) : all;
+  $("cap").hidden = !all.length;
+  $("cap-title").textContent = all.length > 3 ? `Captions: ${all.length} checked, ${items.length} changed`
+    : items.length > 1 ? "Captions" : "Caption";
   $("cap-list").replaceChildren(...items.map(([was, now, i]) => {
     const kept = new Set(now.split(/\s+/)), gone = was.split(/\s+/).filter(t => t && !kept.has(t));
     const copy = el("button", { className: "btn", type: "button", textContent: "Copy caption", hidden: !final });
