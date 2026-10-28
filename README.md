@@ -35,10 +35,10 @@ The benchmark is small and synthetic, and the attacker is a sampling model, so s
 
 | Model | What it does here |
 |---|---|
-| **Muse Spark 1.3** | The attacker: reads the photo the way a stranger would and returns the exposure graph as strict JSON. It also runs every re-attack, and LeakBench's separate transcription pass. |
+| **Muse Spark 1.3** | The attacker: reads the photo and its caption the way a stranger would and returns the exposure graph as strict JSON. It also runs every re-attack, links clues across posts in a large account, rewrites a caption without what gives you away, and transcribes text for the text check and for LeakBench's verifier. |
 | **SAM 3.1** | Outlines each clue the attacker names ("shipping label", "door number plate"), so an edit lands on that object and nowhere else. |
 | **Muse Image 1.0** | Replaces each clue with a blank version or erases it, inside the mask. It also generated every staged photo in the samples and LeakBench. |
-| **Muse Spark Open** (open weights, on Baseten) | The attacker in private mode, so a photo never reaches Meta's API. |
+| **Muse Spark Open** (open weights, on Baseten) | Everything Muse Spark does, in private mode, so a photo never reaches Meta's API. |
 
 ## How it works
 
@@ -231,6 +231,26 @@ scene by scene (earlier per-scene results are in git history, summaries in [benc
   together breaks more combinations than one photo at a time (18/20 against 8/20 over four runs, Fisher's exact
   p = 0.002, with small code changes between those runs).
 
+### What each part is worth
+
+Each ablation takes one part out and reruns the same photos ([bench/results/ablation_*](bench/results), one run
+each, against a full run on the same code). `--rounds 1`, `--edit-all` and `--no-sam` reproduce them.
+
+| Taken out | Photos | Secrets removed | Share of the photo changed | Edits |
+|---|---|---|---|---|
+| Nothing (full agent) | 24 staged | 42/42 | 6.3% | 1.4 per photo |
+| SAM: the attacker's box is the mask | 24 staged | 40/42 | 7.5% | 2.0 per photo |
+| Re-attack rounds: one round of edits | 24 staged | 42/42 | 4.9% | 1.4 per photo |
+| Re-attack rounds | 8 real | 15/20, against 19/20 | 25%, against 28% | 2.9 per photo, against 3.9 |
+| The planner: edit every clue in a risky way | 24 staged | 42/42 | 6.1% | 1.3 per photo |
+| The planner | 5 accounts | 5/5 combinations broken, against 4/5 | 15 of 15 photos, against 6 | 16, against 9 |
+
+- **SAM** keeps edits on the object: without it two secrets survived, and more of each photo changed.
+- **The re-attack loop** earns its keep on real photos, where a first edit misses a line of text: one round left 5 of
+  20 secrets (on the envelope, the door and the screen memo), the loop left 1. On staged photos the first edit lands.
+- **The planner** matters when a combination spans posts: without it every post in every account was edited, with it
+  6 of 15. On a single staged photo most risky ways are one clue, so there is little to choose between.
+
 ### SAM 3 on Modal: tried, not adopted
 
 Private mode masks the attacker's box, and Muse Spark Open's boxes are loose (IoU 0.42 with the object's outline,
@@ -281,6 +301,15 @@ Every fix below came from a miss in a run whose summary is kept in [bench/result
   Muse Spark's boxes overlap the object at IoU 0.59 on average and Muse Spark Open's at 0.42. The error is mostly
   noise, not a fixed offset, so a fitted correction only reached 0.58. SAM now outlines every clue right after the
   attack, the page moves each box onto its outline, and the edits reuse those masks.
+- SAM is picky about wording: on one photo "shipping label" and "door plate" found nothing where "label" and "sign"
+  found each exactly, and a box mask then left half a label behind. A clue's last word, then "sign" and "label", are
+  now tried before the box: SAM outlined all 34 staged edits (27 of 31 before) and 14 of 31 real ones (8 of 39).
+- Keeping every SAM instance near the attacker's box took the building next to a landmark tower. Instances that
+  overlap the box now win; nearness only counts when none does, for small objects whose box lands just off. This came
+  after the runs above.
+- The account callout said "the worst single photo already reaches exact" whenever one post was exact on its own,
+  which hid that name, studies and city only identify someone together. It now names the category that combining
+  sharpens most.
 
 ## Privacy and limits
 
@@ -313,4 +342,7 @@ stepper) are adapted to plain JavaScript from [React Bits](https://reactbits.dev
 - `app/samples.py`: recording and replaying the gallery runs
 - `static/index.html`: the whole UI; `static/sw.js` and `manifest.json` make it an installable app that takes shared
   photos
-- `bench/`: LeakBench, the account benchmark, their staged and real photo sets, and every result summary
+- `app/sam3_modal.py`: SAM 3 open weights on Modal, measured and left out ([why](#sam-3-on-modal-tried-not-adopted))
+- `bench/`: LeakBench (`leakbench.py`, with the ablations), the account benchmark (`accountbench.py`), the box
+  accuracy measurement (`boxcal.py`), the demo Instagram export (`demo_export.py`), the staged and real photo sets,
+  and every result summary

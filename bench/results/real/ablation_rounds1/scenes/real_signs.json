@@ -1,0 +1,37 @@
+{
+ "id": "real_signs",
+ "kind": "leak",
+ "secrets": [
+  "1203",
+  "별빛마을",
+  "Lindenhof"
+ ],
+ "verified": [
+  "1203",
+  "별빛마을",
+  "Lindenhof"
+ ],
+ "seconds": 47.3,
+ "exposure_before": {
+  "home_location": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:door number plate:sam:muse-image",
+  "replace:complex name sign:sam:muse-image",
+  "replace:street name sign:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.2239,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

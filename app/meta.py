@@ -283,12 +283,16 @@ def _iou(a, b) -> float:
     return w * h / union if union > 0 else 0.0
 
 
-def _matches(target, b) -> bool:
-    """Same object: overlapping, or its center within one box size of the target box."""
+def _pick(target, boxes) -> list[int]:
+    """Which of SAM's instances are the attacker's object: those overlapping its box (a pole with two street signs is
+    one clue). Only if none overlaps, those whose center is within one box size, since Spark's boxes for small objects
+    can land just off them. Nearness alone also took the building next to a landmark tower."""
+    over = [i for i, b in enumerate(boxes) if _iou(target, b) >= 0.1]
+    if over:
+        return over
     w, h = target[2] - target[0], target[3] - target[1]
-    cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
-    near = target[0] - w <= cx <= target[2] + w and target[1] - h <= cy <= target[3] + h
-    return near or _iou(target, b) >= 0.1
+    return [i for i, b in enumerate(boxes) if target[0] - w <= (b[0] + b[2]) / 2 <= target[2] + w
+            and target[1] - h <= (b[1] + b[3]) / 2 <= target[3] + h]
 
 
 def _ask(messages: list, schema: dict, name: str, private: bool, effort: str = ATTACK_EFFORT) -> dict:
@@ -510,9 +514,7 @@ def exposure(graph: dict) -> dict[str, int]:
 def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
     """SAM 3.1: exact object mask at full resolution, or None so the caller falls back to the box.
 
-    SAM finds every instance of the text concept; we keep all that overlap the attacker's box or sit right next to
-    it (a pole with two street signs is one clue). "Next to" matters: Spark's boxes for small objects land a few
-    percent off, often below the object, and then miss it entirely.
+    SAM finds every instance of the text concept; _pick keeps the attacker's object among them.
     """
     if client is None:
         return None
@@ -526,8 +528,9 @@ def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
     parser.push(rsp.output_text)
     records = parser.finish(sam.CompletedOutcome()).result.records
     target = [box[0] * sw, box[1] * sh, box[2] * sw, box[3] * sh]
-    hits = [r for r in records if r.kind == "mask" and _matches(target, (r.bounds.left, r.bounds.top,
-                                                                        r.bounds.right, r.bounds.bottom))]
+    masks = [r for r in records if r.kind == "mask"]
+    hits = [masks[i] for i in _pick(target, [(r.bounds.left, r.bounds.top, r.bounds.right, r.bounds.bottom)
+                                             for r in masks])]
     if not hits:
         return None
     placed = np.zeros((sh, sw), np.uint8)
@@ -542,7 +545,7 @@ def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
 
 def segment_open(img: np.ndarray, label: str, box) -> np.ndarray | None:
     """SAM 3 open weights on Modal, for private mode: the same contract as segment(), and the same rule for which
-    instances count (near the attacker's box)."""
+    instances count (_pick)."""
     if not SAM3_URL:
         return None
     small = _small(img)
@@ -553,9 +556,8 @@ def segment_open(img: np.ndarray, label: str, box) -> np.ndarray | None:
         instances = json.load(rsp)["instances"]
     target = [box[0] * sw, box[1] * sh, box[2] * sw, box[3] * sh]
     placed = np.zeros((sh, sw), np.uint8)
-    for inst in instances:
-        if _matches(target, inst["box"]):
-            placed |= np.asarray(Image.open(io.BytesIO(base64.b64decode(inst["mask"]))).convert("L"))[:sh, :sw] > 0
+    for i in _pick(target, [inst["box"] for inst in instances]):
+        placed |= np.asarray(Image.open(io.BytesIO(base64.b64decode(instances[i]["mask"]))).convert("L"))[:sh, :sw] > 0
     if not placed.any():
         return None
     h, w = img.shape[:2]
@@ -628,6 +630,12 @@ if __name__ == "__main__":
     _attack_large(photos, False, "", ["#town"] + [""] * 7)
     assert len(calls) == 8, "unchanged photos are not attacked again"
     attack, _ask = real_attack, real_ask
+
+    # SAM instances: the overlapping ones when any overlaps (not the building beside the tower), else the nearby one
+    # (a small object's box landed just below it).
+    tower, beside, below = [100, 100, 200, 400], [210, 300, 300, 420], [100, 420, 200, 470]
+    assert _pick([110, 110, 190, 390], [beside, tower]) == [1]
+    assert _pick([100, 480, 200, 530], [tower, below]) == [1]
 
     # The text check: contact details counted once each, dates and prices left alone, notes aimed at AI tools caught.
     t = text_check(["mina.park@riverton-labs.test", "010-0000-5512", "Call (555) 123-4567 or 010-0000-5512",
