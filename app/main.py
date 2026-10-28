@@ -118,11 +118,12 @@ async def run(request: Request, photos: list[UploadFile] = File(...), private: b
         raise
     mock = not private and meta.client is None
     attack = meta.mock_attacker() if mock else functools.partial(meta.attack, private=private)
+    read = None if mock else functools.partial(meta.read_text, private=private, effort=meta.ATTACK_EFFORT)
 
     def events():
         try:
             yield json.dumps({"type": "start", "metadata": [m for _, m in loaded], "mock": mock, "private": private}) + "\n"
-            for event in agent.run([img for img, _ in loaded], attack=attack, private=private):
+            for event in agent.run([img for img, _ in loaded], attack=attack, private=private, read=read):
                 yield json.dumps(event) + "\n"
         except Exception:
             log.exception("agent run failed")

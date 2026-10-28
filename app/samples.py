@@ -4,6 +4,7 @@ Record (needs MODEL_API_KEY): uv run --env-file .env python -m app.samples [name
 """
 import asyncio
 import base64
+import functools
 import json
 import shutil
 import time
@@ -43,7 +44,9 @@ def record(name: str) -> None:
         imgs.append(pipeline.load_image(src.read_bytes())[0])
     t0, lines = time.time(), []
     private = name in PRIVATE
-    for event in agent.run(imgs, attack=lambda ims: meta.attack(ims, private=private), private=private):
+    events = agent.run(imgs, attack=functools.partial(meta.attack, private=private), private=private,
+                       read=functools.partial(meta.read_text, private=private, effort=meta.ATTACK_EFFORT))
+    for event in events:
         event = {**event, "t": round(time.time() - t0, 1)}
         if event["type"] == "done":
             event["image_urls"] = []

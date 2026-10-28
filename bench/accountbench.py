@@ -34,8 +34,12 @@ def finals(events) -> list[np.ndarray]:
     return [np.asarray(Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB")) for b in events[-1]["images"]]
 
 
-def attack(imgs):
-    return meta.attack(imgs, private=PRIVATE)
+def attack(imgs, hint=""):
+    return meta.attack(imgs, private=PRIVATE, hint=hint)
+
+
+def read(img):
+    return meta.read_text(img, private=PRIVATE, effort=meta.ATTACK_EFFORT)
 
 
 def score(originals, outs, verified, events_list):
@@ -55,14 +59,14 @@ def evaluate(account: dict) -> dict:
 
     t = time.time()
     with ThreadPoolExecutor(len(imgs)) as pool:
-        alone = list(pool.map(lambda img: list(agent.run([img], attack=attack, private=PRIVATE)), imgs))
+        alone = list(pool.map(lambda img: list(agent.run([img], attack=attack, private=PRIVATE, read=read)), imgs))
     rec["single_seconds"] = round(time.time() - t, 1)
     rec["single_worst_before"] = [max(next(e for e in ev if e["type"] == "attack")["exposure"].values(), default=0)
                                   for ev in alone]
     rec["single"] = score(imgs, [finals(ev)[0] for ev in alone], rec["verified"], alone)
 
     t = time.time()
-    together = list(agent.run(imgs, attack=attack, private=PRIVATE))
+    together = list(agent.run(imgs, attack=attack, private=PRIVATE, read=read))
     rec["account_seconds"] = round(time.time() - t, 1)
     rec["account_worst_before"] = max(next(e for e in together if e["type"] == "attack")["exposure"].values(), default=0)
     rec["account_safe"] = together[-1]["safe"]
