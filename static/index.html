@@ -168,6 +168,10 @@
   .links circle { fill: var(--c); }
   @keyframes draw { from { stroke-dashoffset: 1; } }
   .downloads { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .keep { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .keep ul { list-style: none; margin: 8px 0 0; padding: 0; }
+  .keep label { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; cursor: pointer; }
+  .keep .back { margin: 8px 0 0; color: var(--warn); }
 
   .dossier { position: relative; padding: 16px; background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--fg); border-radius: 12px; }
   .dossier header { padding-right: 110px; }
@@ -290,12 +294,20 @@
         </div>
         <div class="stages" id="stages"></div>
         <div class="downloads" id="downloads"></div>
+        <section class="keep" id="keep" hidden aria-labelledby="keep-title">
+          <b id="keep-title">Keep something?</b>
+          <p class="muted small">Untick anything you want to keep, like your own shop's sign. The copy updates here;
+            it is not re-checked.</p>
+          <ul id="kept"></ul>
+          <p class="back small" id="back" hidden></p>
+        </section>
       </div>
       <aside class="dossier" aria-live="polite">
         <header><small>Exposure report</small><strong>What a stranger learns</strong></header>
         <span class="stamp" id="stamp" hidden></span>
         <p class="summary" id="summary"></p>
         <p class="together" id="together" hidden></p>
+        <p class="together" id="injected" hidden></p>
         <ol class="rows" id="rows"></ol>
         <p class="muted small">Redacted on purpose: the attacker reports what kind of detail shows, never the detail itself.
           Longer bars mean a more precise answer.</p>
@@ -379,7 +391,7 @@ const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
 const stages = () => [...$("stages").children];
 let originals = [], results = [], touched = new Set(), t0 = 0, timer = 0, statusText = "", eventTime = null, privateRun = false;
-let boxes = new Map(), clues = {}, linked = "", round = 1;
+let boxes = new Map(), clues = {}, linked = "", round = 1, firstGraph = null, finals = [], hidden = [];
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -758,11 +770,22 @@ async function handle(e) {
       step("attack", "done", `${clock()} · ${plural(g.clues.length, "clue")}`);
       step("plan", "active");
       if (g.clues.length) statusText = `Found ${plural(g.clues.length, "clue")}. Making a safe copy`;
+      firstGraph = g;
       await reveal(g);
     } else {
       step("check", "active", `round ${e.round} · worst ${LEVEL[top]}`);
       settle(e.exposure, g);
     }
+  } else if (e.type === "textcheck") {
+    // A plain transcription checked with fixed patterns, beside the attack: text in the photo cannot argue with it.
+    const read = Object.entries(e.found).map(([k, n]) => `${n} ${k}${n === 1 ? "" : k.endsWith("s") ? "es" : "s"}`).join(", ");
+    log("Text check: plain transcription, fixed patterns", [read ? `Read ${read}. Values are never shown.` : "No contact details in the text.",
+      ...(e.injection ? ["Some text in the photo addresses AI tools. It is content to review, never an instruction."] : []),
+      ...(e.doubt ? ["The attacker still reported less than this, even when told how much it missed."] : [])]);
+    if (e.injection) Object.assign($("injected"), { hidden: false, textContent:
+      "Text in this photo addresses AI tools, like a note telling a reviewer to report nothing. It was treated as content. " +
+      (read ? `A plain text check, which instructions cannot sway, read ${read}.` : "") +
+      (e.doubt ? " The attacker still reported less than that, so this result is not verified." : "") });
   } else if (e.type === "outlines") {
     // The attacker's boxes are estimates; SAM's outlines are where the objects really are.
     for (const [id, o] of Object.entries(e.outlines)) {
@@ -794,28 +817,22 @@ async function handle(e) {
     scanning(false);
     const checked = round > 1;
     const urls = e.image_urls || e.images.map(b => "data:image/png;base64," + b);
-    const badge = e.unverified ? "Edited, not re-checked" : !e.safe ? "Some exposure remains"
+    const badge = e.unverified ? "Edited, not re-checked" : e.doubt ? "Text check disagrees" : !e.safe ? "Some exposure remains"
                 : checked ? "Verified by a second attack" : "Nothing found to hide";
     stage(urls, badge, e.safe);
-    $("downloads").replaceChildren(...urls.map((href, i) => el("a", { className: "btn primary spark", href,
-      download: urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png",
-      textContent: urls.length > 1 ? `Download photo ${i + 1}` : "Download safe copy" })));
-    // On phones the safe copy can go straight to the share sheet (Instagram, KakaoTalk...). Files are built now,
-    // since Safari only allows share() right inside the tap.
-    const mine = originals;
-    if (navigator.canShare) Promise.all(urls.map(async (u, i) => new File([await (await fetch(u)).blob()],
-      urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png", { type: "image/png" })))
-      .then(files => originals === mine && navigator.canShare({ files }) && $("downloads").append(el("button", {
-        className: "btn", type: "button", textContent: urls.length > 1 ? "Share safe copies" : "Share safe copy",
-        onclick: () => navigator.share({ files }).catch(() => {}) }))).catch(() => {});
+    finals = [...urls];
+    offer(urls);
+    offerKeep(e.hidden || []);
     settle(e.after);
-    $("stamp").replaceChildren(el("span", { className: e.safe ? "shiny" : "", textContent: e.unverified ? "Unchecked" : !e.safe ? "Exposed" : checked ? "Verified" : "Clean" }));
+    $("stamp").replaceChildren(el("span", { className: e.safe ? "shiny" : "", textContent: e.unverified || e.doubt ? "Unchecked" : !e.safe ? "Exposed" : checked ? "Verified" : "Clean" }));
     $("stamp").classList.toggle("ok", e.safe);
+    Object.assign($("stamp").dataset, { text: $("stamp").textContent, ok: e.safe ? "1" : "" });
     $("stamp").hidden = false;
     if (!checked && round === 1) { step("plan", "done", "nothing to edit"); step("edit", "done", "skipped"); }
-    step("check", e.safe ? "done" : "warn", e.unverified ? "re-check failed" : e.safe ? `${clock()} · clean` : `${clock()} · exposure remains`);
+    step("check", e.safe ? "done" : "warn", e.unverified ? "re-check failed" : e.doubt ? "text check disagrees" : e.safe ? `${clock()} · clean` : `${clock()} · exposure remains`);
     const worst = Math.max(0, ...Object.values(e.after));
     status(e.unverified ? "Edited, but the re-check did not finish, so this copy is not verified. Check it yourself before posting."
+         : e.doubt ? "Not verified: a note in the photo seems to have talked the attacker out of reporting contact details that a plain text check read. Check the photo yourself."
          : e.safe ? "Done. Nothing specific about you is visible any more. GPS and other file metadata are removed too."
          : `Done, but some exposure remains ("${LEVEL[worst]}"). Open the agent trace for details.`, !e.safe);
   } else if (e.type === "error") {
@@ -824,6 +841,83 @@ async function handle(e) {
     $("steps").querySelectorAll(".active").forEach(li => li.className = "warn");
     status(e.text, true);
   }
+}
+
+// Download and share buttons for the current copies. On phones a copy can go straight to the share sheet
+// (Instagram, KakaoTalk...). Files are built now, since Safari only allows share() right inside the tap.
+function offer(urls) {
+  const name = i => urls.length > 1 ? `safe-photo-${i + 1}.png` : "safe-photo.png";
+  $("downloads").replaceChildren(...urls.map((href, i) => el("a", { className: "btn primary spark", href, download: name(i),
+    textContent: urls.length > 1 ? `Download photo ${i + 1}` : "Download safe copy" })));
+  const mine = originals;
+  if (navigator.canShare) Promise.all(urls.map(async (u, i) => new File([await (await fetch(u)).blob()], name(i), { type: "image/png" })))
+    .then(files => originals === mine && navigator.canShare({ files }) && $("downloads").append(el("button", {
+      className: "btn", type: "button", textContent: urls.length > 1 ? "Share safe copies" : "Share safe copy",
+      onclick: () => navigator.share({ files }).catch(() => {}) }))).catch(() => {});
+}
+
+// "Keep something?": one checkbox per object the agent hid. Unticking one puts the original pixels back inside its
+// mask (except where something still hidden overlaps), and the first attack's ways say what that gives back.
+function offerKeep(items) {
+  hidden = items;
+  $("keep").hidden = !items.length;
+  $("back").hidden = true;
+  $("kept").replaceChildren(...items.map((h, k) => el("li", {}, el("label", {},
+    Object.assign(el("input", { type: "checkbox", checked: true }), { onchange: () => keep(), value: k }),
+    el("span", { textContent: `Hidden: ${h.label}${originals.length > 1 ? ` (photo ${h.photo + 1})` : ""}` })))));
+}
+
+const picture = src => new Promise((ok, no) => Object.assign(new Image(), { onload: e => ok(e.target), onerror: no, src }));
+
+async function keep() {
+  const ticks = [...$("kept").querySelectorAll("input")], kept = ticks.filter(t => !t.checked).map(t => hidden[+t.value]);
+  const mine = originals;
+  const urls = await Promise.all(finals.map(async (fin, i) => {
+    const back = kept.filter(h => h.photo === i);
+    if (!back.length) return fin;
+    const still = hidden.filter(h => h.photo === i && !back.includes(h));
+    const [orig, done] = await Promise.all([picture(originals[i]), picture(fin)]);
+    const canvas = el("canvas", { width: done.naturalWidth, height: done.naturalHeight }), w = canvas.width, hgt = canvas.height;
+    const area = el("canvas", { width: w, height: hgt }), a = area.getContext("2d");
+    for (const h of back) a.drawImage(await picture("data:image/png;base64," + h.mask), 0, 0, w, hgt);
+    a.globalCompositeOperation = "destination-out";
+    for (const h of still) a.drawImage(await picture("data:image/png;base64," + h.mask), 0, 0, w, hgt);
+    a.globalCompositeOperation = "source-in";
+    a.drawImage(orig, 0, 0, w, hgt);
+    const c = canvas.getContext("2d");
+    c.drawImage(done, 0, 0);
+    c.drawImage(area, 0, 0);
+    return URL.createObjectURL(await new Promise(r => canvas.toBlob(r, "image/png")));
+  }));
+  if (originals !== mine) return;
+  results.forEach((u, i) => { if (u !== finals[i] && u.startsWith("blob:")) URL.revokeObjectURL(u); });
+  urls.forEach((u, i) => { results[i] = u; });
+  stages().forEach((s, i) => {
+    const b = s.querySelector(".badge"), mine = kept.some(h => h.photo === i);
+    b.dataset.text ??= b.textContent;
+    b.dataset.ok ??= b.classList.contains("ok") ? "1" : "";
+    b.textContent = mine ? "Your choice, not re-checked" : b.dataset.text;
+    b.classList.toggle("ok", !mine && b.dataset.ok === "1");
+  });
+  show("after");
+  offer(urls);
+  const back = givesBack(kept);
+  $("back").hidden = !kept.length;
+  $("back").textContent = !kept.length ? "" : back.length ? `Keeping this gives back: ${back.join("; ")}.`
+    : "Keeping this gives back nothing the first attack rated above the limits. This copy is not re-checked.";
+  $("stamp").firstChild.textContent = kept.length ? "Your call" : $("stamp").dataset.text;
+  $("stamp").classList.toggle("ok", !kept.length && $("stamp").dataset.ok === "1");
+  if (kept.length) status(`You kept ${plural(kept.length, "thing")}. This copy is your choice and has not been re-checked.`);
+}
+
+// From the first attack's report: the inferences that rise above the limits again once the kept clues are back.
+function givesBack(kept) {
+  if (!firstGraph) return [];
+  const stillHidden = new Set(hidden.filter(h => !kept.includes(h)).flatMap(h => h.clues));
+  const allHidden = new Set(hidden.flatMap(h => h.clues));
+  const level = (inf, gone) => Math.max(0, ...inf.ways.filter(w => !w.clues.some(c => gone.has(c))).map(w => w.level));
+  return firstGraph.inferences.filter(inf => level(inf, stillHidden) > Math.max(level(inf, allHidden), ALLOWED[inf.category] ?? 2))
+    .map(inf => `${CATEGORY[inf.category]}: ${LEVEL[level(inf, stillHidden)]}`);
 }
 
 let running = false, server = { live: false, code: false };
@@ -862,7 +956,10 @@ async function begin(srcs, request) {
   $("summary").textContent = "";
   $("rows").replaceChildren(el("li", { className: "row wait",
     textContent: many ? "Reading the account the way a stranger would" : "Reading the photo the way a stranger would" }));
-  $("tabs").hidden = $("stamp").hidden = $("together").hidden = true;
+  $("tabs").hidden = $("stamp").hidden = $("together").hidden = $("injected").hidden = $("keep").hidden = true;
+  firstGraph = null;
+  finals = [];
+  hidden = [];
   boxes = new Map();
   $("view").hidden = false;
   $("view").scrollIntoView({ behavior: calm ? "auto" : "smooth" });
