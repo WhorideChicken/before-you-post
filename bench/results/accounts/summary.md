@@ -4,20 +4,20 @@
 
 | | One photo at a time | As one account |
 |---|---|---|
-| Combinations broken | 2/5 | 5/5 |
-| Edits made | 2 | 7 |
-| Photos changed | 2/15 | 6/15 |
-| Share of each photo changed (mean) | 0.3% | 1.8% |
-| Time per account (mean, the three single runs in parallel) | 34 s | 80 s |
+| Combinations broken | 1/5 | 4/5 |
+| Edits made | 1 | 9 |
+| Photos changed | 1/15 | 6/15 |
+| Share of each photo changed (mean) | 0.2% | 2.8% |
+| Time per account (mean, the three single runs in parallel) | 36 s | 74 s |
 
-Whole run cost (estimate, including the verifier): $0.74
+Whole run cost (estimate, including the verifier): $0.91
 
 ## Per account
 
 | Account | Pieces legible | Worst exposure, each photo alone | Worst exposure together | One at a time | As one account |
 |---|---|---|---|---|---|
-| mina | 2/2 | [1, 1, 2] | 3 | intact, 0 edit(s): - | broken, 3 edit(s): replace:stack of lab papers, pixelate:classroom lab microscope, replace:folded local newspaper |
-| daniel | 3/3 | [1, 1, 2] | 3 | intact, 0 edit(s): - | broken, 1 edit(s): replace:town welcome sign |
-| yuna | 3/3 | [1, 1, 2] | 3 | intact, 0 edit(s): - | broken, 1 edit(s): replace:chocolate message plaque |
-| leo | 3/3 | [1, 1, 3] | 3 | broken, 1 edit(s): replace:transit card | broken, 1 edit(s): replace:guitar case sticker |
-| priya | 3/3 | [1, 1, 3] | 3 | broken, 1 edit(s): replace:ferry ticket stub | broken, 1 edit(s): replace:ferry ticket |
+| mina | 2/2 | [1, 2, 2] | 3 | intact, 0 edit(s): - | intact, 3 edit(s): replace:stack of lab reports, pixelate:lab microscope, replace:classroom wall poster |
+| daniel | 3/3 | [1, 1, 2] | 3 | intact, 0 edit(s): - | broken, 3 edit(s): replace:birthday cake, pixelate:birthday cake candles, replace:roadside welcome sign |
+| yuna | 3/3 | [1, 1, 2] | 3 | intact, 0 edit(s): - | broken, 1 edit(s): replace:chocolate birthday plaque |
+| leo | 3/3 | [1, 0, 2] | 3 | intact, 0 edit(s): - | broken, 1 edit(s): replace:guitar case sticker |
+| priya | 3/3 | [1, 0, 3] | 3 | broken, 1 edit(s): replace:ferry ticket | broken, 1 edit(s): erase:ferry ticket stub |

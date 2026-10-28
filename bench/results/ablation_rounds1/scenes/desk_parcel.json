@@ -1,0 +1,54 @@
+{
+ "id": "desk_parcel",
+ "kind": "leak",
+ "secrets": [
+  "Mina Park",
+  "221 Maple Street",
+  "Riverton High",
+  "Maple St"
+ ],
+ "verified": [
+  "Mina Park",
+  "221 Maple Street",
+  "Riverton High",
+  "Maple St"
+ ],
+ "seconds": 51.2,
+ "exposure_before": {
+  "home_location": 4,
+  "current_location": 4,
+  "work_or_school": 3,
+  "identity": 3,
+  "contact": 4,
+  "routine": 2,
+  "financial_or_id": 4,
+  "other_people": 3
+ },
+ "exposure_after": {
+  "work_or_school": 1,
+  "current_location": 2
+ },
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "email address": 1,
+   "phone number": 1,
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:parcel shipping label:sam:muse-image",
+  "replace:street name sign:sam:muse-image",
+  "replace:staff ID badge:sam:muse-image",
+  "replace:laptop email screen:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1414,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

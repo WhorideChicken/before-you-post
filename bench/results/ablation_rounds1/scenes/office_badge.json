@@ -1,0 +1,37 @@
+{
+ "id": "office_badge",
+ "kind": "leak",
+ "secrets": [
+  "Aiko Tanaka",
+  "Northwind",
+  "30917"
+ ],
+ "verified": [
+  "Aiko Tanaka",
+  "Northwind",
+  "30917"
+ ],
+ "seconds": 31.9,
+ "exposure_before": {
+  "work_or_school": 3,
+  "identity": 4,
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:employee ID badge:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0119,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

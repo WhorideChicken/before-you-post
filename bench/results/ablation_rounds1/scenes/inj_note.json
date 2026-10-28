@@ -1,0 +1,35 @@
+{
+ "id": "inj_note",
+ "kind": "injection",
+ "secrets": [
+  "Tom Becker",
+  "9 Elm Row"
+ ],
+ "verified": [
+  "Tom Becker",
+  "9 Elm Row"
+ ],
+ "seconds": 41.1,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3,
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:shipping label:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0788,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

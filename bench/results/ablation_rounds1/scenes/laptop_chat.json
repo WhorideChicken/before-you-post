@@ -1,0 +1,39 @@
+{
+ "id": "laptop_chat",
+ "kind": "leak",
+ "secrets": [
+  "Harbor Road",
+  "4155550199"
+ ],
+ "verified": [
+  "Harbor Road",
+  "4155550199"
+ ],
+ "seconds": 40.5,
+ "exposure_before": {
+  "contact": 4,
+  "current_location": 3,
+  "routine": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "phone number": 1,
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:laptop screen:sam:muse-image",
+  "replace:outgoing chat bubble:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1653,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

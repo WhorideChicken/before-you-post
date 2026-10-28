@@ -9,7 +9,7 @@
   "한빛아파트",
   "1504"
  ],
- "seconds": 18.5,
+ "seconds": 56.1,
  "exposure_before": {
   "home_location": 4,
   "current_location": 4
@@ -17,13 +17,19 @@
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "pixelate:wall mounted sign:box:pixelate",
-  "pixelate:door number plate:box:pixelate"
+  "pixelate:apartment door plaque:box:pixelate",
+  "pixelate:building directory sign:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0295,
+ "changed_ours": 0.0352,
  "survived_naive": [],
- "changed_naive": 0.2007
+ "changed_naive": 0.2011
 }

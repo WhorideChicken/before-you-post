@@ -1,0 +1,38 @@
+{
+ "id": "gym_mirror",
+ "kind": "leak",
+ "secrets": [
+  "Lucas Ferreira",
+  "55821"
+ ],
+ "verified": [
+  "Lucas Ferreira",
+  "55821"
+ ],
+ "seconds": 32.1,
+ "exposure_before": {
+  "identity": 4,
+  "financial_or_id": 4,
+  "current_location": 3,
+  "routine": 2
+ },
+ "exposure_after": {
+  "current_location": 1
+ },
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:gym membership card:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0226,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

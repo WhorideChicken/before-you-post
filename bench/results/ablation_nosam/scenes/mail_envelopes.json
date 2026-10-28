@@ -1,0 +1,36 @@
+{
+ "id": "mail_envelopes",
+ "kind": "leak",
+ "secrets": [
+  "Sofia Marin",
+  "88 Cedar Court"
+ ],
+ "verified": [
+  "Sofia Marin",
+  "88 Cedar Court"
+ ],
+ "seconds": 25.6,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:white mailing envelope:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0077,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

@@ -1,0 +1,37 @@
+{
+ "id": "concert_ticket",
+ "kind": "leak",
+ "secrets": [
+  "Lindqvist",
+  "88304412"
+ ],
+ "verified": [
+  "Lindqvist",
+  "88304412"
+ ],
+ "seconds": 49.0,
+ "exposure_before": {
+  "identity": 4,
+  "financial_or_id": 4,
+  "current_location": 4,
+  "routine": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:concert ticket:sam:muse-image",
+  "replace:concert ticket:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0541,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

@@ -1,0 +1,23 @@
+{
+ "id": "ctrl_landscape",
+ "kind": "control",
+ "secrets": [],
+ "verified": [],
+ "seconds": 4.8,
+ "exposure_before": {},
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 1,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

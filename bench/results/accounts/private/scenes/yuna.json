@@ -10,11 +10,11 @@
   "간호학과",
   "해솔시"
  ],
- "single_seconds": 19.3,
+ "single_seconds": 10.1,
  "single_worst_before": [
   1,
   2,
-  0
+  2
  ],
  "single": {
   "survived": [
@@ -27,19 +27,20 @@
   "photos_changed": 0,
   "changed": 0.0
  },
- "account_seconds": 39.7,
+ "photos": 3,
+ "account_seconds": 101.4,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
   "survived": [
-   "해솔시"
+   "유나"
   ],
   "broken": true,
   "edits": [
-   "pixelate:chocolate plaque",
-   "pixelate:open notebook page"
+   "pixelate:folded yellow t-shirt",
+   "pixelate:open notebook"
   ],
   "photos_changed": 2,
-  "changed": 0.0215
+  "changed": 0.1434
  }
 }

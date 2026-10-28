@@ -8,24 +8,24 @@
   "Mina",
   "Riverton"
  ],
- "single_seconds": 16.6,
+ "single_seconds": 17.5,
  "single_worst_before": [
   1,
-  2,
-  3
+  0,
+  2
  ],
  "single": {
   "survived": [
-   "Mina"
+   "Mina",
+   "Riverton"
   ],
-  "broken": true,
-  "edits": [
-   "pixelate:folded newspaper"
-  ],
-  "photos_changed": 1,
-  "changed": 0.0307
+  "broken": false,
+  "edits": [],
+  "photos_changed": 0,
+  "changed": 0.0
  },
- "account_seconds": 35.0,
+ "photos": 3,
+ "account_seconds": 39.6,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
@@ -34,10 +34,10 @@
   ],
   "broken": true,
   "edits": [
-   "pixelate:folded newspaper",
-   "pixelate:stack of lab reports"
+   "pixelate:stack of lab reports",
+   "pixelate:folded newspaper"
   ],
   "photos_changed": 2,
-  "changed": 0.0578
+  "changed": 0.0666
  }
 }

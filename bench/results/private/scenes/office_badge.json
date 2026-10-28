@@ -11,16 +11,24 @@
   "Northwind",
   "30917"
  ],
- "seconds": 18.2,
+ "seconds": 25.5,
  "exposure_before": {
   "work_or_school": 3,
-  "identity": 4,
-  "financial_or_id": 4,
-  "routine": 2
+  "identity": 3,
+  "financial_or_id": 3
  },
- "exposure_after": {},
+ "exposure_after": {
+  "work_or_school": 2,
+  "routine": 1
+ },
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
   "pixelate:employee ID badge:box:pixelate"
  ],
@@ -28,5 +36,5 @@
  "survived_ours": [],
  "changed_ours": 0.0273,
  "survived_naive": [],
- "changed_naive": 0.1307
+ "changed_naive": 0.1265
 }

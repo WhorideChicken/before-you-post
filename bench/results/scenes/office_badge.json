@@ -11,21 +11,30 @@
   "Northwind",
   "30917"
  ],
- "seconds": 32.0,
+ "seconds": 32.5,
  "exposure_before": {
   "work_or_school": 3,
   "identity": 4,
   "financial_or_id": 4
  },
- "exposure_after": {},
+ "exposure_after": {
+  "work_or_school": 1,
+  "routine": 1
+ },
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
   "replace:employee ID badge:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0109,
+ "changed_ours": 0.011,
  "survived_naive": [],
- "changed_naive": 0.1581
+ "changed_naive": 0.1204
 }

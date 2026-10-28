@@ -10,7 +10,7 @@
   "Fire Rescue",
   "Lakeport"
  ],
- "single_seconds": 39.5,
+ "single_seconds": 39.3,
  "single_worst_before": [
   1,
   1,
@@ -27,19 +27,21 @@
   "photos_changed": 0,
   "changed": 0.0
  },
- "account_seconds": 144.6,
+ "photos": 3,
+ "account_seconds": 99.4,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
   "survived": [
-   "Daniel",
    "Fire Rescue"
   ],
   "broken": true,
   "edits": [
-   "replace:town welcome sign"
+   "replace:birthday cake",
+   "pixelate:birthday cake candles",
+   "replace:roadside welcome sign"
   ],
-  "photos_changed": 1,
-  "changed": 0.0208
+  "photos_changed": 2,
+  "changed": 0.0457
  }
 }

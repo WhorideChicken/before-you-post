@@ -7,20 +7,27 @@
  "verified": [
   "7KXR392"
  ],
- "seconds": 34.2,
+ "seconds": 22.6,
  "exposure_before": {
   "financial_or_id": 4,
-  "home_location": 2
+  "home_location": 2,
+  "current_location": 2
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "replace:car license plate:sam:muse-image"
+  "pixelate:car license plate:sam:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0077,
+ "changed_ours": 0.012,
  "survived_naive": [],
- "changed_naive": 0.2925
+ "changed_naive": 0.3293
 }

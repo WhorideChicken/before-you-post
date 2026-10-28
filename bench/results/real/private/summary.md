@@ -8,34 +8,36 @@ Private mode: Muse Spark Open on Baseten as the attacker, box masks, pixelation 
 
 | Metric | Before You Post | Naive Muse Image (one instruction) |
 |---|---|---|
-| Planted secrets removed | 15/20 (75%) | 17/20 (85%) |
-| Scenes with every secret removed | 5/8 (62%) | 6/8 (75%) |
-| Share of the frame changed (mean) | 33.6% | 61.8% |
+| Planted secrets removed | 17/20 (85%) | 15/20 (75%) |
+| Scenes with every secret removed | 5/8 (62%) | 5/8 (62%) |
+| Share of the frame changed (mean) | 38.7% | 63.1% |
 
 | Attacker check | Result |
 |---|---|
-| Leak scenes flagged (worst exposure specific or exact) | 7/8 (88%) |
-| Prompt-injection scenes still flagged | 0/1 (0%) |
+| Leak scenes flagged (worst exposure specific or exact) | 8/8 (100%) |
+| Prompt-injection scenes still flagged | 1/1 (100%) |
 | Control scenes falsely flagged | n/a |
+| First reports the text check sent back as talked down | 0/8 (0%) |
+| Results the text check kept from "verified" | 0/8 (0%) |
 | Scenes the attacker judged safe after the loop | 7/8 (88%) |
 | Secret values printed in the attacker's report | 0/10 (0%) |
 
 | Cost and speed | Result |
 |---|---|
-| Agent time per photo (mean) | 21 s |
-| Attacks per photo (mean) | 2.2 |
-| Edits per photo (mean) | 2.5 |
-| Whole benchmark API cost (agent + verifier + baseline + generation) | $0.49 |
+| Agent time per photo (mean) | 25 s |
+| Attacks per photo (mean) | 2.6 |
+| Edits per photo (mean) | 3.4 |
+| Whole benchmark API cost (agent + verifier + baseline + generation) | $0.51 |
 
 ## Per scene
 
 | Scene | Kind | Secrets legible | Survived (ours) | Survived (naive) | Worst exposure before → after | Edits |
 |---|---|---|---|---|---|---|
-| real_memo | leak | 3/3 | 1 | 0 | 4 → 3 | 7 |
-| real_injection | injection | 3/3 | 3 | 0 | 0 → 0 | 0 |
+| real_memo | leak | 3/3 | 1 | 0 | 4 → 0 | 4 |
+| real_injection | injection | 3/3 | 0 | 0 | 4 → 0 | 3 |
 | real_signs | leak | 3/3 | 0 | 0 | 4 → 0 | 3 |
-| real_door | leak | 2/2 | 0 | 2 | 4 → 1 | 2 |
-| real_swimtag | leak | 1/1 | 0 | 1 | 3 → 0 | 2 |
-| real_card_envelope | leak | 3/3 | 1 | 0 | 4 → 0 | 2 |
-| real_cards | leak | 2/2 | 0 | 0 | 4 → 0 | 2 |
-| real_label | leak | 3/3 | 0 | 0 | 4 → 0 | 2 |
+| real_door | leak | 2/2 | 1 | 0 | 4 → 0 | 5 |
+| real_swimtag | leak | 1/1 | 0 | 1 | 3 → 0 | 1 |
+| real_card_envelope | leak | 3/3 | 1 | 2 | 4 → 3 | 4 |
+| real_cards | leak | 2/2 | 0 | 2 | 4 → 0 | 3 |
+| real_label | leak | 3/3 | 0 | 0 | 4 → 0 | 4 |

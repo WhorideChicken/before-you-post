@@ -1,0 +1,41 @@
+{
+ "id": "boarding_pass",
+ "kind": "leak",
+ "secrets": [
+  "Okafor",
+  "Q7XK2P"
+ ],
+ "verified": [
+  "Okafor",
+  "Q7XK2P"
+ ],
+ "seconds": 34.1,
+ "exposure_before": {
+  "identity": 3,
+  "routine": 3,
+  "current_location": 3,
+  "financial_or_id": 4
+ },
+ "exposure_after": {
+  "identity": 1
+ },
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:boarding pass card:box:muse-image",
+  "replace:boarding pass card:box:muse-image",
+  "replace:boarding pass card:box:muse-image",
+  "pixelate:printed barcode strip:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0985,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

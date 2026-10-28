@@ -10,7 +10,7 @@
   "간호학과",
   "해솔시"
  ],
- "single_seconds": 42.5,
+ "single_seconds": 47.7,
  "single_worst_before": [
   1,
   1,
@@ -27,7 +27,8 @@
   "photos_changed": 0,
   "changed": 0.0
  },
- "account_seconds": 60.9,
+ "photos": 3,
+ "account_seconds": 73.5,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
@@ -37,9 +38,9 @@
   ],
   "broken": true,
   "edits": [
-   "replace:chocolate message plaque"
+   "replace:chocolate birthday plaque"
   ],
   "photos_changed": 1,
-  "changed": 0.0056
+  "changed": 0.0048
  }
 }

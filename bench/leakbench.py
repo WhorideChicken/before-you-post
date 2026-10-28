@@ -39,6 +39,13 @@ NOTES: list[str] = []  # what this run measures, printed under the summary title
 NAIVE_ON = True  # --no-naive skips the one-instruction baseline (ablation runs compare against the full agent)
 
 
+def edit_all(graph: dict, target: int = agent.TARGET, captions: bool = False):
+    """Ablation planner: every clue in a way above the limits, instead of the fewest that break every way."""
+    ids = {i for w in agent.risky_ways(graph, target) for i in w["clues"]}
+    boxed = {c["id"] for c in graph["clues"] if c["box"]}
+    return sorted(ids & boxed), [w for w in agent.risky_ways(graph, target) if not set(w["clues"]) & boxed]
+
+
 def track_usage():
     """Count tokens and calls on the shared clients, for a cost estimate of the whole run. Muse Spark Open on
     Baseten has the same per-token prices as Muse Spark, so their tokens are counted together."""
@@ -236,10 +243,6 @@ def main():
         agent.MAX_ATTACKS = args.rounds + 1
         NOTES.append(f"Ablation: at most {args.rounds} round(s) of edits; the last attack only verifies.")
     if args.edit_all:
-        def edit_all(graph, target=agent.TARGET, captions=False):
-            ids = {i for w in agent.risky_ways(graph, target) for i in w["clues"]}
-            boxed = {c["id"] for c in graph["clues"] if c["box"]}
-            return sorted(ids & boxed), [w for w in agent.risky_ways(graph, target) if not set(w["clues"]) & boxed]
         agent.plan = edit_all
         NOTES.append("Ablation: no planner. Every clue in a way above the limits is edited.")
     if args.no_sam:

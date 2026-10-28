@@ -10,10 +10,10 @@
   "Vet Tech",
   "Port Alder"
  ],
- "single_seconds": 28.6,
+ "single_seconds": 40.8,
  "single_worst_before": [
   1,
-  1,
+  0,
   3
  ],
  "single": {
@@ -23,12 +23,13 @@
   ],
   "broken": true,
   "edits": [
-   "replace:ferry ticket stub"
+   "replace:ferry ticket"
   ],
   "photos_changed": 1,
-  "changed": 0.0106
+  "changed": 0.0102
  },
- "account_seconds": 50.0,
+ "photos": 3,
+ "account_seconds": 40.9,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
@@ -38,9 +39,9 @@
   ],
   "broken": true,
   "edits": [
-   "replace:ferry ticket"
+   "erase:ferry ticket stub"
   ],
   "photos_changed": 1,
-  "changed": 0.0227
+  "changed": 0.0463
  }
 }

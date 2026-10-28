@@ -1,0 +1,34 @@
+{
+ "id": "kr_door",
+ "kind": "leak",
+ "secrets": [
+  "한빛아파트",
+  "1504"
+ ],
+ "verified": [
+  "한빛아파트",
+  "1504"
+ ],
+ "seconds": 31.3,
+ "exposure_before": {
+  "home_location": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:wall directional sign:sam:muse-image",
+  "replace:door number plate:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0089,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

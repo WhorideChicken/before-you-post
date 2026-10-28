@@ -1,0 +1,38 @@
+{
+ "id": "fridge_calendar",
+ "kind": "leak",
+ "secrets": [
+  "Northgate Elementary",
+  "Emma"
+ ],
+ "verified": [
+  "Northgate Elementary",
+  "Emma"
+ ],
+ "seconds": 50.3,
+ "exposure_before": {
+  "work_or_school": 3,
+  "identity": 1,
+  "routine": 3
+ },
+ "exposure_after": {
+  "routine": 2,
+  "other_people": 1
+ },
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "erase:handwritten pickup note:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1561,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

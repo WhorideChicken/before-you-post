@@ -9,9 +9,10 @@
   "Okafor",
   "Q7XK2P"
  ],
- "seconds": 48.5,
+ "seconds": 51.3,
  "exposure_before": {
   "identity": 3,
+  "current_location": 3,
   "routine": 4,
   "financial_or_id": 4
  },
@@ -20,12 +21,18 @@
  },
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "replace:boarding pass:box:muse-image"
+  "replace:boarding pass paper:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0772,
+ "changed_ours": 0.0511,
  "survived_naive": [],
- "changed_naive": 0.3541
+ "changed_naive": 0.3625
 }

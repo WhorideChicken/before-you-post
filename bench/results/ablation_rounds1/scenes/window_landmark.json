@@ -1,0 +1,36 @@
+{
+ "id": "window_landmark",
+ "kind": "leak",
+ "secrets": [
+  "Meridian",
+  "Pine"
+ ],
+ "verified": [
+  "Meridian",
+  "Pine"
+ ],
+ "seconds": 38.4,
+ "exposure_before": {
+  "current_location": 4
+ },
+ "exposure_after": {
+  "home_location": 2
+ },
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:rooftop hotel sign:sam:muse-image",
+  "replace:street name sign:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0095,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

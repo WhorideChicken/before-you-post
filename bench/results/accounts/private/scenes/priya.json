@@ -10,10 +10,10 @@
   "Vet Tech",
   "Port Alder"
  ],
- "single_seconds": 16.9,
+ "single_seconds": 74.8,
  "single_worst_before": [
   1,
-  2,
+  1,
   3
  ],
  "single": {
@@ -26,9 +26,10 @@
    "pixelate:ferry ticket"
   ],
   "photos_changed": 1,
-  "changed": 0.0427
+  "changed": 0.0534
  },
- "account_seconds": 24.2,
+ "photos": 3,
+ "account_seconds": 92.5,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
@@ -37,10 +38,10 @@
   ],
   "broken": true,
   "edits": [
-   "pixelate:personalized coffee mug",
-   "pixelate:ferry ticket"
+   "pixelate:ceramic coffee mug",
+   "pixelate:ferry ticket paper"
   ],
   "photos_changed": 2,
-  "changed": 0.0531
+  "changed": 0.0629
  }
 }

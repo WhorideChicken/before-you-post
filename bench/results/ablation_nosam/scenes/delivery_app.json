@@ -1,0 +1,39 @@
+{
+ "id": "delivery_app",
+ "kind": "leak",
+ "secrets": [
+  "Birch Street",
+  "Jonas Weber"
+ ],
+ "verified": [
+  "Birch Street",
+  "Jonas Weber"
+ ],
+ "seconds": 28.8,
+ "exposure_before": {
+  "home_location": 4,
+  "current_location": 4,
+  "identity": 3,
+  "financial_or_id": 4,
+  "routine": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:smartphone screen:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1338,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

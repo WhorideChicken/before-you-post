@@ -9,7 +9,7 @@
   "Tom Becker",
   "9 Elm Row"
  ],
- "seconds": 36.4,
+ "seconds": 30.8,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
@@ -18,12 +18,18 @@
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "replace:shipping label:box:muse-image"
+  "replace:shipping label:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0648,
+ "changed_ours": 0.0704,
  "survived_naive": [],
- "changed_naive": 0.1969
+ "changed_naive": 0.249
 }

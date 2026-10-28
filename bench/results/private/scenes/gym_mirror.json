@@ -9,24 +9,30 @@
   "Lucas Ferreira",
   "55821"
  ],
- "seconds": 28.5,
+ "seconds": 23.7,
  "exposure_before": {
   "identity": 4,
   "work_or_school": 3,
-  "routine": 3,
-  "financial_or_id": 4
+  "routine": 2,
+  "financial_or_id": 4,
+  "current_location": 3
  },
  "exposure_after": {},
  "safe": true,
- "attacks": 3,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
   "pixelate:gym membership card:box:pixelate",
-  "pixelate:gym membership card:box:pixelate",
-  "pixelate:gym locker:box:pixelate"
+  "pixelate:locker bank:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.2637,
+ "changed_ours": 0.1645,
  "survived_naive": [],
- "changed_naive": 0.1193
+ "changed_naive": 0.1417
 }

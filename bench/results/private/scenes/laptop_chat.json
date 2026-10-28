@@ -9,23 +9,33 @@
   "Harbor Road",
   "4155550199"
  ],
- "seconds": 17.5,
+ "seconds": 25.7,
  "exposure_before": {
   "contact": 4,
   "current_location": 4,
-  "routine": 4,
-  "home_location": 4
+  "routine": 3
  },
  "exposure_after": {},
  "safe": true,
- "attacks": 2,
+ "attacks": 3,
+ "textcheck": {
+  "found": {
+   "phone number": 1,
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
+  "pixelate:phone number header:box:pixelate",
+  "pixelate:chat message bubble:box:pixelate",
   "pixelate:phone number header:box:pixelate",
   "pixelate:chat message bubble:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0719,
+ "changed_ours": 0.1614,
  "survived_naive": [],
- "changed_naive": 0.0878
+ "changed_naive": 0.0994
 }

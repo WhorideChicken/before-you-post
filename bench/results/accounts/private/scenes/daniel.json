@@ -10,7 +10,7 @@
   "Fire Rescue",
   "Lakeport"
  ],
- "single_seconds": 18.0,
+ "single_seconds": 34.2,
  "single_worst_before": [
   1,
   2,
@@ -26,21 +26,22 @@
    "pixelate:wooden welcome sign"
   ],
   "photos_changed": 1,
-  "changed": 0.0523
+  "changed": 0.0401
  },
- "account_seconds": 37.3,
+ "photos": 3,
+ "account_seconds": 49.0,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
   "survived": [
+   "Daniel",
    "Fire Rescue"
   ],
   "broken": true,
   "edits": [
-   "pixelate:welcome sign",
-   "pixelate:birthday cake"
+   "pixelate:welcome sign"
   ],
-  "photos_changed": 2,
-  "changed": 0.0877
+  "photos_changed": 1,
+  "changed": 0.038
  }
 }

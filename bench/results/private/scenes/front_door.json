@@ -9,23 +9,28 @@
   "Willow Lane",
   "Hartleys"
  ],
- "seconds": 17.5,
+ "seconds": 17.4,
  "exposure_before": {
   "home_location": 4,
-  "identity": 3,
-  "other_people": 3
+  "identity": 3
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "pixelate:personalized doormat:box:pixelate",
-  "pixelate:front door:box:pixelate",
+  "pixelate:front door mat:box:pixelate",
+  "pixelate:front door number:box:pixelate",
   "pixelate:street sign:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.2156,
+ "changed_ours": 0.0774,
  "survived_naive": [],
- "changed_naive": 0.2645
+ "changed_naive": 0.2603
 }

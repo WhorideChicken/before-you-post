@@ -11,32 +11,41 @@
   "010-0000-2718",
   "별빛로 12"
  ],
- "seconds": 95.7,
+ "seconds": 111.2,
  "exposure_before": {
   "contact": 4,
-  "current_location": 4,
-  "routine": 3,
-  "identity": 3
+  "home_location": 4,
+  "routine": 3
  },
  "exposure_after": {
-  "routine": 3
+  "routine": 3,
+  "contact": 4,
+  "identity": 1
  },
  "safe": false,
  "attacks": 4,
+ "textcheck": {
+  "found": {
+   "email address": 1,
+   "phone number": 1,
+   "street address": 1
+  },
+  "injection": false,
+  "retried": true,
+  "doubt": false
+ },
  "edits": [
   "replace:email address line:box:muse-image",
   "replace:phone number line:box:muse-image",
   "replace:meeting location line:box:muse-image",
-  "pixelate:email address line:box:pixelate",
-  "pixelate:phone number line:box:pixelate",
-  "replace:meeting location line:box:muse-image",
-  "pixelate:screen email line:box:pixelate",
-  "pixelate:screen phone line:box:pixelate",
-  "pixelate:screen address line:box:pixelate"
+  "pixelate:printed contact line:box:pixelate",
+  "pixelate:printed contact line:box:pixelate"
  ],
  "values_printed": [],
- "survived_ours": [],
- "changed_ours": 0.0228,
+ "survived_ours": [
+  "010-0000-2718"
+ ],
+ "changed_ours": 0.0134,
  "survived_naive": [],
- "changed_naive": 0.3518
+ "changed_naive": 0.3546
 }

@@ -8,10 +8,10 @@
   "Mina",
   "Riverton"
  ],
- "single_seconds": 32.9,
+ "single_seconds": 39.8,
  "single_worst_before": [
   1,
-  1,
+  2,
   2
  ],
  "single": {
@@ -24,20 +24,22 @@
   "photos_changed": 0,
   "changed": 0.0
  },
- "account_seconds": 90.7,
+ "photos": 3,
+ "account_seconds": 112.1,
  "account_worst_before": 3,
- "account_safe": true,
+ "account_safe": false,
  "account": {
   "survived": [
-   "Mina"
+   "Mina",
+   "Riverton"
   ],
-  "broken": true,
+  "broken": false,
   "edits": [
-   "replace:stack of lab papers",
-   "pixelate:classroom lab microscope",
-   "replace:folded local newspaper"
+   "replace:stack of lab reports",
+   "pixelate:lab microscope",
+   "replace:classroom wall poster"
   ],
-  "photos_changed": 2,
-  "changed": 0.0357
+  "photos_changed": 1,
+  "changed": 0.0417
  }
 }

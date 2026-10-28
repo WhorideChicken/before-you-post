@@ -11,19 +11,34 @@
   "010-0000-2718",
   "별빛로 12"
  ],
- "seconds": 16.9,
- "exposure_before": {},
+ "seconds": 20.1,
+ "exposure_before": {
+  "contact": 4,
+  "identity": 3,
+  "current_location": 3,
+  "routine": 3
+ },
  "exposure_after": {},
  "safe": true,
- "attacks": 1,
- "edits": [],
- "values_printed": [],
- "survived_ours": [
-  "riverton-labs.tes",
-  "010-0000-2718",
-  "별빛로 12"
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "email address": 1,
+   "phone number": 1,
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "pixelate:laptop screen text:box:pixelate",
+  "pixelate:laptop screen text:box:pixelate",
+  "pixelate:laptop screen text:box:pixelate"
  ],
- "changed_ours": 0.0,
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0246,
  "survived_naive": [],
  "changed_naive": 0.5718
 }

@@ -3,15 +3,21 @@
  "kind": "control",
  "secrets": [],
  "verified": [],
- "seconds": 16.1,
+ "seconds": 27.7,
  "exposure_before": {},
  "exposure_after": {},
  "safe": true,
  "attacks": 1,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [],
  "values_printed": [],
  "survived_ours": [],
  "changed_ours": 0.0,
  "survived_naive": [],
- "changed_naive": 0.3379
+ "changed_naive": 0.3346
 }

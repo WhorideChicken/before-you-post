@@ -11,22 +11,30 @@
   "310 Oak Avenue",
   "4821"
  ],
- "seconds": 39.0,
+ "seconds": 29.3,
  "exposure_before": {
   "current_location": 4,
-  "routine": 4,
-  "financial_or_id": 3,
+  "routine": 2,
+  "financial_or_id": 2,
   "other_people": 1
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "replace:paper receipt:sam:muse-image"
+  "erase:paper receipt:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0297,
+ "changed_ours": 0.1329,
  "survived_naive": [],
- "changed_naive": 0.4365
+ "changed_naive": 0.4436
 }

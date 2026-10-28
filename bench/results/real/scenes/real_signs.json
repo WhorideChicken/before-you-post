@@ -11,21 +11,28 @@
   "별빛마을",
   "Lindenhof"
  ],
- "seconds": 29.6,
+ "seconds": 59.9,
  "exposure_before": {
-  "home_location": 4
+  "home_location": 4,
+  "current_location": 3
  },
  "exposure_after": {},
  "safe": true,
- "attacks": 2,
+ "attacks": 3,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "replace:apartment number plate:box:muse-image",
-  "replace:residential complex sign:box:muse-image",
-  "replace:street name sign:box:muse-image"
+  "replace:apartment complex banner:sam:muse-image",
+  "replace:street name sign:sam:muse-image",
+  "pixelate:door number plate:sam:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.2261,
+ "changed_ours": 0.2602,
  "survived_naive": [],
- "changed_naive": 0.447
+ "changed_naive": 0.5988
 }

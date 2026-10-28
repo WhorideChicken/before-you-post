@@ -1,0 +1,40 @@
+{
+ "id": "receipt",
+ "kind": "leak",
+ "secrets": [
+  "Blue Fern",
+  "310 Oak Avenue",
+  "4821"
+ ],
+ "verified": [
+  "Blue Fern",
+  "310 Oak Avenue",
+  "4821"
+ ],
+ "seconds": 34.8,
+ "exposure_before": {
+  "current_location": 3,
+  "routine": 4,
+  "financial_or_id": 2,
+  "other_people": 1
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "erase:printed restaurant receipt:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1331,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

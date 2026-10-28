@@ -1,0 +1,41 @@
+{
+ "id": "mina",
+ "secrets": [
+  "Mina",
+  "Riverton"
+ ],
+ "verified": [
+  "Mina",
+  "Riverton"
+ ],
+ "single_seconds": 30.8,
+ "single_worst_before": [
+  1,
+  1,
+  2
+ ],
+ "single": {
+  "survived": [
+   "Mina",
+   "Riverton"
+  ],
+  "broken": false,
+  "edits": [],
+  "photos_changed": 0,
+  "changed": 0.0
+ },
+ "photos": 7,
+ "account_seconds": 47.9,
+ "account_worst_before": 2,
+ "account_safe": true,
+ "account": {
+  "survived": [
+   "Mina",
+   "Riverton"
+  ],
+  "broken": false,
+  "edits": [],
+  "photos_changed": 0,
+  "changed": 0.0
+ }
+}

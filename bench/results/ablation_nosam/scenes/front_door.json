@@ -1,0 +1,43 @@
+{
+ "id": "front_door",
+ "kind": "leak",
+ "secrets": [
+  "Willow Lane",
+  "Hartleys"
+ ],
+ "verified": [
+  "Willow Lane",
+  "Hartleys"
+ ],
+ "seconds": 66.1,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3
+ },
+ "exposure_after": {
+  "current_location": 3
+ },
+ "safe": false,
+ "attacks": 4,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "erase:front door:box:muse-image",
+  "replace:street name sign:box:muse-image",
+  "replace:porch doormat:box:muse-image",
+  "erase:front entry door:box:muse-image",
+  "pixelate:street name sign:box:pixelate",
+  "pixelate:street name sign:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [
+  "Willow Lane"
+ ],
+ "changed_ours": 0.2097,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

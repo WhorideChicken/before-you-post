@@ -1,0 +1,29 @@
+{
+ "id": "ctrl_brand",
+ "kind": "control",
+ "secrets": [],
+ "verified": [],
+ "seconds": 37.2,
+ "exposure_before": {
+  "work_or_school": 3,
+  "current_location": 1,
+  "routine": 1
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:stainless water bottle:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0193,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

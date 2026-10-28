@@ -17,11 +17,12 @@ photos is fictional; the scenes were generated with Muse Image.
 On LeakBench, 24 staged photos with planted fictional secrets, scored by an independent transcription pass
 ([details](#leakbench)):
 
-- Standard mode removed **every legible planted secret** in both of its last two runs (41 of 41, 42 of 42), changing
-  **5–8%** of the photo. A one-shot "remove all personal information" repaint changed 22–23% and missed up to 3.
+- Standard mode removed **every legible planted secret** in each of its last three runs (41 of 41, 42 of 42, 42 of
+  42), changing **5–8%** of the photo. A one-shot "remove all personal information" repaint changed 22–24% and
+  missed up to 5.
 - Private mode, where nothing is sent to Meta's API, also removed all 42 in both runs, changing about 13%.
 - On 5 staged accounts where a first name, a job and a town sit in three separate posts, checking the account's photos
-  together broke **14 of 15** combinations over three runs; checking one photo at a time broke 7
+  together broke **18 of 20** combinations over four runs; checking one photo at a time broke 8
   ([details](#account-benchmark)).
 - No planted value was echoed in the attacker's reports (0 of 33), all 4 prompt-injection photos were still flagged,
   and none of the 4 controls were.
@@ -153,16 +154,18 @@ simple reference, and the closest thing to "ask an image model to clean it".
 
 | 24 staged photos | Standard | Private | Muse Image, one instruction |
 |---|---|---|---|
-| Planted secrets removed | **42/42** | **42/42** | 39/42 and 40/42 (one run per mode) |
-| Share of the photo changed | **5.3%** | 12.6% | 23.4% and 23.2% |
-| Time per photo | 35 s | 19 s | |
+| Planted secrets removed | **42/42** | **42/42** | 42/42 and 37/42 (one run per mode) |
+| Share of the photo changed | **6.3%** | 12.9% | 23.5% in both |
+| Time per photo | 37 s | 36 s | |
 
 - How many secrets count depends on what the verifier could read in the originals, so totals can differ by one
   between runs.
-- Standard: 27 of 31 edits used a SAM outline, the rest the attacker's box. This private run used boxes only, so it
-  changes more of the photo.
-- Costs are estimates from token and call counts at list prices: $1.63 (standard) and $1.13 (private) per full run,
-  including the verifier, baseline and image generation.
+- Standard: all 34 edits used a SAM outline (27 of 31 before SAM fell back to plain nouns like "label" and "sign").
+  Private mode uses boxes, so it changes more of the photo.
+- Times are inflated: four benchmark jobs shared the same APIs. Measured alone, the text check's transcription (6 s
+  standard, 9 s private) finishes before the attack it runs beside (13–14 s), so it adds no wait.
+- Costs are estimates from token and call counts at list prices: $1.80 (standard) and $1.23 (private) per full run,
+  including the verifier, baseline, text check and image generation.
 - Summaries: [standard](bench/results/summary.md), [private](bench/results/private/summary.md).
   Rerun: `uv run --env-file .env python -m bench.leakbench --force [--private]`.
 
@@ -172,14 +175,16 @@ angles) but they are not real-world scenes, and some show the sheet's "all value
 
 | 8 phone photos of a screen | Standard | Private | Muse Image, one instruction |
 |---|---|---|---|
-| Planted secrets removed | 19/20 | 15/20 | 17/20 in both runs |
-| Share of the photo changed | 25% | 34% | 62% |
+| Planted secrets removed | 19/20 | 17/20 | 17/20 in both runs |
+| Share of the photo changed | 28% | 39% | 62–64% |
 
-- Text fills these photos, so much more of each one changes. SAM found an outline for 8 of 39 edits; the rest used
-  boxes.
-- Standard missed one name on an envelope. Private mode missed the same name and an email domain on screen, and the
-  Korean injection note fooled Muse Spark Open again on both the first attack and the retry, so that photo kept all
-  three secrets. The standard attacker flagged that note in every run.
+- Text fills these photos, so much more of each one changes. SAM found an outline for 14 of 31 edits (8 of 39 before
+  the plain-noun fallback); the rest used boxes.
+- Standard missed one detail in a line of screen text. Private mode missed a name on an envelope, a unit number on a
+  door and a street in screen text. Over three private runs: 14, 15, then 17 of 20.
+- The Korean injection note did not fool Muse Spark Open in this run, after fooling it on the first attack and the
+  retry in the one before. The text check's first patterns did not flag that note as aimed at AI tools: the
+  transcription splits it into lines. Fixed since, with the note as a test case; the runs above predate the fix.
 - Summaries: [standard](bench/results/real/summary.md), [private](bench/results/real/private/summary.md). Rerun with
   `--set real`.
 
@@ -190,36 +195,41 @@ job or a routine, one a town. Each is harmless alone; together they point to one
 pieces before and after, and a combination counts as broken when at least one legible piece is gone. The agent runs
 on the same photos twice: one photo at a time, as a single-photo checker would, and as one account.
 
-| 5 accounts, 15 photos | One photo at a time | As one account |
+| Combinations broken | One photo at a time | As one account |
 |---|---|---|
-| Combinations broken, standard | 2/5 | **5/5** |
-| Combinations broken, private | 4/5 | **5/5** |
-| Photos changed, standard | 2/15 | 6/15 |
-| Share of each photo changed, standard | 0.3% | 1.8% |
+| Standard, latest run | 1/5 | **4/5** |
+| Standard, four runs pooled | 8/20 | **18/20** (Fisher's exact p = 0.002) |
+| Private | 3/5 | **5/5** |
+| With 4 everyday posts mixed into each account (7 photos, attacked one by one and linked) | 1/5 | **4/5** |
 
-- In 3 of the 5 accounts no photo alone rated above "narrowed", so one photo at a time nothing was removed. Together
-  they rated "specific", and the agent removed a piece, often a single one (a town sign, a name on a cake).
-- Where one photo already rated "specific" on its own (a transit card, a ferry ticket naming the town), both ways
-  removed it. Muse Spark Open rates single photos higher, so private mode removed more one photo at a time.
-- Earlier runs on slightly older code gave 2/5 against 4/5 and 3/5 against 5/5 in standard mode: the gap held, its
-  size varies.
-- Summaries: [standard](bench/results/accounts/summary.md), [private](bench/results/accounts/private/summary.md).
-  Rerun: `uv run --env-file .env python -m bench.accountbench --force [--private]`.
+- In most accounts no photo alone rated above "narrowed", so one photo at a time nothing was removed. Together they
+  rated "specific", and the agent removed a piece, often a single one (a town sign, a name on a cake). Where one photo
+  already rated "specific" on its own (a ferry ticket naming the town), both ways removed it.
+- The linking path for large accounts held up with decoys: it broke the same 4 of 5, and changed 5 of 35 photos
+  (0.3% of each photo on average), leaving the everyday posts alone.
+- The score only counts pieces of text. In the latest standard run the "mina" account counts as intact although the
+  agent took out its job piece, which is visual (a biology classroom: lab reports, a microscope, a poster).
+- The four standard runs were on slightly different code as the agent changed, so the pooled figure says the gap is
+  consistent, not that it is exactly 40 points.
+- Summaries: [standard](bench/results/accounts/summary.md), [private](bench/results/accounts/private/summary.md),
+  [with decoys](bench/results/accounts/decoys/summary.md).
+  Rerun: `uv run --env-file .env python -m bench.accountbench --force [--private] [--decoys]`.
 
 ### Run-to-run variation
 
-Each number above comes from one run, and the attacker samples, so we compared the last two runs scene by scene
-(the previous per-scene results are in git history):
+Each number above comes from one run, and the attacker samples, so we compared the last three runs of each set
+scene by scene (earlier per-scene results are in git history, summaries in [bench/results](bench/results)):
 
-- **Noise:** the removal counts (41/41 and 42/42 staged, both 100%; 18/20 and 19/20 real; 14/20 and 15/20 real in
-  private mode) differ by one secret, and with what the verifier could read in the originals.
-- **Not settled:** the share of the photo changed in standard mode fell from 8.0% to 5.3%, down in 13 of 24 scenes
-  and up in 4. The over-editing fix may explain part of it, but one run per version cannot separate that from noise.
+- **Noise:** the removal counts move by a secret or two (staged 41/41, 42/42, 42/42; real 18, 19, 19 of 20) and with
+  what the verifier could read in the originals.
+- **Not settled:** the share of the photo changed in standard mode went 8.0%, 5.3%, 6.3%. The over-editing fix may
+  explain part of the drop from the first, but a run per version cannot separate that from noise.
 - **Noise, and large:** private mode swings far more per scene (the car plate went from 41% changed to 2%, the window
-  landmark from 16% to 46%), while its mean stayed the same (13.2%, 12.6%).
-- **Holds in every run:** the one-shot repaint changes much more of the photo (22–23% against 5–8%; more in 22 of 24
-  scenes in the latest run), and checking an account together breaks more combinations than one photo at a time
-  (14/15 against 7/15 over three runs, Fisher's exact p = 0.014, with small code changes between those runs).
+  landmark from 16% to 46%), while its mean stays put (13.2%, 12.6%, 12.9%).
+- **Holds in every run:** the one-shot repaint changes much more of the photo (22–24% against 5–8%; more in 23 of 24
+  scenes in the latest run) and is the only one to miss staged secrets (up to 5 of 42), and checking an account
+  together breaks more combinations than one photo at a time (18/20 against 8/20 over four runs, Fisher's exact
+  p = 0.002, with small code changes between those runs).
 
 ### SAM 3 on Modal: tried, not adopted
 

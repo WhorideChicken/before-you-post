@@ -9,25 +9,32 @@
   "1203",
   "별빛마을"
  ],
- "seconds": 17.3,
+ "seconds": 31.4,
  "exposure_before": {
-  "home_location": 4
+  "home_location": 4,
+  "current_location": 3
  },
- "exposure_after": {
-  "identity": 1
- },
+ "exposure_after": {},
  "safe": true,
- "attacks": 2,
+ "attacks": 4,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "pixelate:property number plate:box:pixelate",
-  "pixelate:complex name plate:box:pixelate"
+  "pixelate:door number plate:box:pixelate",
+  "pixelate:complex name sign:box:pixelate",
+  "pixelate:gold door plaque:box:pixelate",
+  "pixelate:browser tab:box:pixelate",
+  "pixelate:pixelated credential display:box:pixelate"
  ],
  "values_printed": [],
- "survived_ours": [],
- "changed_ours": 0.2688,
- "survived_naive": [
-  "1203",
-  "별빛마을"
+ "survived_ours": [
+  "1203"
  ],
- "changed_naive": 0.4689
+ "changed_ours": 0.5308,
+ "survived_naive": [],
+ "changed_naive": 0.5023
 }

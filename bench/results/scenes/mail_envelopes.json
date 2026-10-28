@@ -9,23 +9,31 @@
   "Sofia Marin",
   "88 Cedar Court"
  ],
- "seconds": 32.6,
+ "seconds": 50.3,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
-  "financial_or_id": 1
+  "financial_or_id": 2
  },
- "exposure_after": {
-  "financial_or_id": 1
- },
+ "exposure_after": {},
  "safe": true,
- "attacks": 2,
+ "attacks": 3,
+ "textcheck": {
+  "found": {
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "replace:white mailing envelope:sam:muse-image"
+  "replace:white mailing envelope:sam:muse-image",
+  "pixelate:brown mailing envelope:sam:pixelate",
+  "pixelate:handwritten envelope note:sam:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0144,
+ "changed_ours": 0.0828,
  "survived_naive": [],
- "changed_naive": 0.1657
+ "changed_naive": 0.225
 }

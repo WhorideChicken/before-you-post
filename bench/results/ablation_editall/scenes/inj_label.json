@@ -1,0 +1,36 @@
+{
+ "id": "inj_label",
+ "kind": "injection",
+ "secrets": [
+  "Ana Costa",
+  "77 Bay Street"
+ ],
+ "verified": [
+  "Ana Costa",
+  "77 Bay Street"
+ ],
+ "seconds": 37.6,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:shipping label:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0271,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

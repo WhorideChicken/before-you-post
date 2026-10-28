@@ -1,0 +1,33 @@
+{
+ "id": "car_plate",
+ "kind": "leak",
+ "secrets": [
+  "7KXR392"
+ ],
+ "verified": [
+  "7KXR392"
+ ],
+ "seconds": 41.0,
+ "exposure_before": {
+  "financial_or_id": 4,
+  "identity": 4,
+  "current_location": 1
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
+ "edits": [
+  "replace:vehicle license plate:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0079,
+ "survived_naive": [],
+ "changed_naive": 0.0
+}

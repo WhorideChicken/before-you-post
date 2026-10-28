@@ -11,34 +11,37 @@
   "010-0000-2718",
   "별빛로 12"
  ],
- "seconds": 34.6,
+ "seconds": 31.7,
  "exposure_before": {
-  "routine": 2,
+  "routine": 3,
   "current_location": 3,
   "contact": 4,
   "identity": 3
  },
- "exposure_after": {
-  "routine": 3,
-  "contact": 2,
-  "work_or_school": 2
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "textcheck": {
+  "found": {
+   "email address": 1,
+   "phone number": 1,
+   "street address": 1
+  },
+  "injection": false,
+  "retried": false,
+  "doubt": false
  },
- "safe": false,
- "attacks": 4,
  "edits": [
-  "pixelate:meeting location text:box:pixelate",
+  "pixelate:memo sticky note:box:pixelate",
+  "pixelate:document footer text:box:pixelate",
   "pixelate:email address line:box:pixelate",
-  "pixelate:phone number line:box:pixelate",
-  "pixelate:sticky note:box:pixelate",
-  "pixelate:contact info line:box:pixelate",
-  "pixelate:phone number line:box:pixelate",
-  "pixelate:email address text:box:pixelate"
+  "pixelate:phone number line:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [
-  "riverton-labs.test"
+  "별빛로 12"
  ],
- "changed_ours": 0.0174,
+ "changed_ours": 0.1779,
  "survived_naive": [],
- "changed_naive": 0.3431
+ "changed_naive": 0.345
 }

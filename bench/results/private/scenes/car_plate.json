@@ -7,20 +7,27 @@
  "verified": [
   "7KXR392"
  ],
- "seconds": 17.5,
+ "seconds": 17.1,
  "exposure_before": {
-  "home_location": 3,
+  "home_location": 4,
   "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
+ "textcheck": {
+  "found": {},
+  "injection": false,
+  "retried": false,
+  "doubt": false
+ },
  "edits": [
-  "pixelate:vehicle license plate:box:pixelate"
+  "pixelate:license plate:box:pixelate",
+  "pixelate:suburban house:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0229,
+ "changed_ours": 0.4112,
  "survived_naive": [],
- "changed_naive": 0.3353
+ "changed_naive": 0.3118
 }

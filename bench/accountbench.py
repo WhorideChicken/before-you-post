@@ -142,6 +142,7 @@ def main():
     ap.add_argument("--private", action="store_true")
     ap.add_argument("--only", default="")
     ap.add_argument("--decoys", action="store_true", help="add 4 everyday posts to each account (7 photos)")
+    ap.add_argument("--edit-all", action="store_true", help="no planner: edit every clue in a risky way")
     args = ap.parse_args()
     assert meta.client, "the verifier needs MODEL_API_KEY (run with --env-file .env)"
     if args.private:
@@ -149,6 +150,8 @@ def main():
         PRIVATE, RESULTS = True, RESULTS / "private"
     if args.decoys:
         DECOYS, RESULTS = ["ctrl_food", "ctrl_landscape", "ctrl_desk", "ctrl_brand"], RESULTS / "decoys"
+    if args.edit_all:  # ablation: without the planner, a combination of three pieces loses all three
+        agent.plan, RESULTS = leakbench.edit_all, RESULTS / "editall"
     leakbench.track_usage()
     (RESULTS / "scenes").mkdir(parents=True, exist_ok=True)
     accounts = json.loads((ROOT / "accounts.json").read_text(encoding="utf-8"))

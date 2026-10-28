@@ -10,7 +10,7 @@
   "Every Friday",
   "Ashby"
  ],
- "single_seconds": 15.9,
+ "single_seconds": 79.0,
  "single_worst_before": [
   1,
   1,
@@ -23,24 +23,25 @@
   ],
   "broken": true,
   "edits": [
-   "pixelate:plastic transit card"
+   "pixelate:blue card"
   ],
   "photos_changed": 1,
-  "changed": 0.0304
+  "changed": 0.0333
  },
- "account_seconds": 22.3,
+ "photos": 3,
+ "account_seconds": 78.4,
  "account_worst_before": 3,
  "account_safe": true,
  "account": {
   "survived": [
-   "Leo",
-   "Every Friday"
+   "Leo"
   ],
   "broken": true,
   "edits": [
+   "pixelate:pinned paper notice",
    "pixelate:transit card"
   ],
-  "photos_changed": 1,
-  "changed": 0.0221
+  "photos_changed": 2,
+  "changed": 0.0809
  }
 }
