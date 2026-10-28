@@ -25,15 +25,16 @@ FALLBACK = ("sign", "label")  # plain nouns SAM finds on most objects that carry
 MAX_EDITS = 12  # per round: bounds cost and memory on a small host; anything left goes in the next round
 
 
-def plan(graph: dict, target: int = TARGET) -> tuple[list[str], list[dict]]:
+def plan(graph: dict, target: int = TARGET, captions: bool = False) -> tuple[list[str], list[dict]]:
     """Minimum-cost set of editable clues that breaks every way to reach a level above target.
 
     A way needs all of its clues together, so removing any one of them blocks it (a hitting set).
     Returns the clue ids to edit, and the risky ways nothing can block because none of their clues has a box.
+    captions: clues in the caption are editable too (the caption gets rewritten).
     """
     clues = {c["id"]: c for c in graph["clues"]}
     ways = risky_ways(graph, target)
-    editable = {i for i, c in clues.items() if c["box"]}
+    editable = {i for i, c in clues.items() if c["box"] or (captions and c.get("kind") == "caption")}
     stuck = [w for w in ways if not editable & set(w["clues"])]
     ways = [set(w["clues"]) & editable for w in ways if editable & set(w["clues"])]
     if not ways:
@@ -65,7 +66,10 @@ def risky_ways(graph: dict, target: int = TARGET) -> list[dict]:
 
 
 def clue_cost(clue: dict) -> int:
-    """The attacker's own estimate of how much hiding it hurts, floored by how much of the frame it covers."""
+    """The attacker's own estimate of how much hiding it hurts, floored by how much of the frame it covers.
+    A caption detail costs the least: rewriting text leaves the photo alone."""
+    if not clue["box"]:
+        return COST["low"]
     x0, y0, x1, y1 = clue["box"]
     area = (x1 - x0) * (y1 - y0)
     return max([COST[clue["removal_impact"]]] + [c for share, c in LARGE if area >= share])
@@ -179,14 +183,20 @@ def _text_check(reading) -> dict | None:
     return meta.text_check(texts) if reading else None
 
 
-def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, private: bool = False, read=None):
+def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, private: bool = False, read=None,
+        caption: str = "", rewrite=None):
     """Yield progress events for the UI. One photo, or several from one account attacked together: the planner then
     breaks combinations across photos with the fewest edits overall. Image fields are lists in photo order, None for
     a photo a step left unchanged. The last event carries the final PNGs (lossless, metadata-free).
     private: edits stay on this server (see apply_edits); the caller passes the matching attacker.
-    read: transcribes one photo (meta.read_text); with it, a deterministic text check runs beside the first attack."""
+    read: transcribes one photo (meta.read_text); with it, a deterministic text check runs beside the first attack.
+    caption: what will be posted with the photos, attacked with them; rewrite(caption, details) removes details
+    from it (meta.rewrite_caption), and every re-attack sees the rewritten caption."""
     current, before, failed, doubt, retried = list(imgs), None, False, False, False
     hidden = []  # what was edited out, one entry per object across rounds, so the owner can choose to keep one
+
+    def strike(**kw):
+        return attack(current, **kw, **({"caption": caption} if caption else {}))
     edited = [np.zeros(img.shape[:2], bool) for img in imgs]
     tried = [[] for _ in imgs]  # boxes already set out to edit, per photo
     for n in range(1, MAX_ATTACKS + 1):
@@ -198,15 +208,15 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
                 # A literal transcription runs beside the first attack. Text in a photo can talk the attacker out of
                 # a report; it cannot talk a regular expression out of a phone number.
                 reading = [pool.submit(read, img) for img in imgs] if read and n == 1 else []
-                graph = attack(current)
+                graph = strike()
                 if private and n == 1 and not graph["inferences"]:
                     # An empty report is what every injected "report nothing" asks for, and Muse Spark Open sometimes
                     # complies, so an empty first answer gets a second, independent attack.
-                    graph = attack(current)
+                    graph = strike()
                 check = _text_check(reading)
             if check and meta.suspect(graph, check):
                 retried = True
-                graph = attack(current, hint=meta.hint(check))
+                graph = strike(hint=meta.hint(check))
                 # Still talked down, with text aimed at AI tools in the photo: never call this result verified.
                 doubt = check["injection"] and meta.suspect(graph, check)
         except Exception:
@@ -232,7 +242,7 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
             outlines = {i: _bounds(m) for i, (m, source) in known.items() if source != "box"}
             if outlines:
                 yield {"type": "outlines", "model": "SAM 3" if private else "SAM 3.1", "outlines": outlines}
-        ids, stuck = plan(graph, target)
+        ids, stuck = plan(graph, target, captions=bool(caption and rewrite))
 
         def inside(c):
             m = pipeline.box_mask(imgs[c["photo"]].shape, c["box"])
@@ -245,7 +255,8 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
         if not ids or n == MAX_ATTACKS:
             break
         items = {}  # photo index -> edits
-        for c in [c for c in graph["clues"] if c["id"] in ids][:MAX_EDITS]:
+        words = [c for c in graph["clues"] if c["id"] in ids and not c["box"]]  # the planner only picks those in the caption
+        for c in [c for c in graph["clues"] if c["id"] in ids and c["box"]][:MAX_EDITS]:
             p, box = c["photo"], c["box"]
             # Found again where we already edited: the generative edit kept it, so use one that cannot fail. Private
             # mode has no SAM outline, so there a miss means the box was off: widen it, and small boxes from the start.
@@ -255,7 +266,7 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
             tried[p].append((box, c["label"]))
             items.setdefault(p, []).append({"id": c["id"], "photo": p, "label": c["label"], "box": box,
                                             "action": "pixelate" if again else c["suggested"]})
-        count = sum(map(len, items.values()))
+        count = sum(map(len, items.values())) + len(words)
         yield {"type": "plan", "round": n, "clues": ids, "stuck": len(stuck),
                "text": f"Breaking {len(risky_ways(graph, target))} ways in with {count} edit{'s' if count != 1 else ''}"}
         if n == 1:
@@ -269,6 +280,11 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
                 area = pipeline.grow(area, max(img.shape[:2]) // 30)
                 preview[p] = pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))
             yield {"type": "preview", "images": preview}
+        if words:
+            caption = rewrite(caption, [f"{c['label']}: {c['observation']}" for c in words])
+            yield {"type": "caption", "round": n, "caption": caption, "removed": [c["label"] for c in words]}
+        if not items:
+            continue
         with ThreadPoolExecutor(len(items)) as pool:
             results = dict(zip(items, pool.map(lambda p: apply_edits(current[p], items[p], private, known), items)))
         done = []
@@ -287,7 +303,7 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
                "images": [pipeline.encode_jpeg_b64(current[p]) if p in results else None for p in range(len(imgs))]}
     yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "unverified": failed,
            "doubt": doubt, "safe": not failed and not doubt and not ids and not stuck,
-           "hidden": [{**h, "mask": _alpha_png(h["mask"])} for h in hidden],
+           "hidden": [{**h, "mask": _alpha_png(h["mask"])} for h in hidden], "caption": caption,
            "images": [base64.b64encode(pipeline.encode_png(img)).decode() for img in current]}
 
 
@@ -392,6 +408,23 @@ if __name__ == "__main__":
     hidden = events[-1]["hidden"]
     assert [(h["label"], h["clues"]) for h in hidden] == [("house number", ["c1"])], hidden
     assert Image.open(io.BytesIO(base64.b64decode(hidden[0]["mask"]))).size == (img.shape[1], img.shape[0])
+
+    # The caption is attacked with the photo. A school named only in the caption gets the caption rewritten, and the
+    # photo comes back byte-identical; every re-attack sees the new caption.
+    said = []
+
+    def reader(ims, hint="", caption=""):
+        said.append(caption)
+        tag = {"id": "c1", "box": [0, 0, 0, 0], "label": "school hashtag", "kind": "caption", "observation": "a school",
+               "removal_impact": "low", "suggested": "erase"}
+        return meta.normalize({"clues": [tag], "summary": "", "inferences": [{"category": "work_or_school", "reasoning": "",
+                               "ways": [way(["c1"], 3)]}]} if "#haeoreum" in caption else meta.MOCK_CLEAN)
+    events = list(run([img], attack=reader, caption="First day! #haeoreum",
+                      rewrite=lambda cap, details: cap.replace(" #haeoreum", "")))
+    assert [e["caption"] for e in events if e["type"] == "caption"] == ["First day!"] and said[-1] == "First day!"
+    assert events[-1]["safe"] and events[-1]["caption"] == "First day!" and not events[-1]["hidden"]
+    assert events[-1]["images"][0] == base64.b64encode(pipeline.encode_png(img)).decode()
+    assert plan(reader([img], caption="#haeoreum")) == ([], [reader([img], caption="#haeoreum")["inferences"][0]["ways"][0]])
 
     # A re-attack that fails hands the edits back, marked unverified, instead of losing them.
     def flaky(graphs=iter([meta.normalize(meta.MOCK_ATTACK)])):

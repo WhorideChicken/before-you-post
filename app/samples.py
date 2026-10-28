@@ -18,6 +18,12 @@ SOURCES = {"desk": ["desk_parcel"], "front_door": ["front_door"],
            "desk_private": ["desk_parcel"], "kr_market": ["kr_market"], "kr_school": ["kr_school"],
            "kr_moving": ["kr_moving"]}
 PRIVATE = {"desk_private"}  # recorded in private mode: Muse Spark Open, edits on the server
+# What each post would say. Captions often name what the photo's edits hide. Fictional, like the photos.
+CAPTIONS = {
+    "kr_market": "에어프라이어 팝니다 (6개월 사용) 🍟 직거래는 솔빛로 88 앞에서 가능해요 #중고거래",
+    "kr_school": "우리 딸 드디어 초등학생 🌸 1학년 3반 친구들이랑 잘 지내자! #입학식 #해오름초등학교 #한별시맘",
+    "kr_moving": "이사 끝! 🏠 별빛타워 보이는 집으로 왔어요. 집들이는 다음 주에 🙌 #새집 #한별시",
+}
 SPEEDUP = 4
 
 
@@ -45,7 +51,8 @@ def record(name: str) -> None:
     t0, lines = time.time(), []
     private = name in PRIVATE
     events = agent.run(imgs, attack=functools.partial(meta.attack, private=private), private=private,
-                       read=functools.partial(meta.read_text, private=private, effort=meta.ATTACK_EFFORT))
+                       read=functools.partial(meta.read_text, private=private, effort=meta.ATTACK_EFFORT),
+                       caption=CAPTIONS.get(name, ""), rewrite=functools.partial(meta.rewrite_caption, private=private))
     for event in events:
         event = {**event, "t": round(time.time() - t0, 1)}
         if event["type"] == "done":

@@ -18,6 +18,7 @@ from . import agent, meta, pipeline, samples
 MAX_BYTES = 20 * 1024 * 1024
 MAX_SIDE = 2048  # bounds time, cost and the size of the streamed result for a public demo
 MAX_PHOTOS = 6  # an account scan sends every photo to the attacker in one request
+MAX_CAPTION = 2200  # Instagram's caption limit
 RUN_LEASE = 300  # seconds one live run may hold the only slot, in case its stream is never read
 RUNS_PER_HOUR = int(os.environ.get("RUNS_PER_HOUR", "4"))  # per visitor, live model runs only
 RUNS_PER_DAY = int(os.environ.get("RUNS_PER_DAY", "30"))  # whole site: about $3 of API calls at worst
@@ -99,10 +100,12 @@ def status():
 
 @app.post("/api/run")
 async def run(request: Request, photos: list[UploadFile] = File(...), private: bool = Form(False),
-              code: str = Form("")):
+              code: str = Form(""), caption: str = Form("")):
     """Stream the agent's progress as NDJSON: attack, plan, edits, re-attack, done (with the final PNGs).
     Several photos are scanned as one account: attacked together, so combinations across them count.
-    private: Muse Spark Open finds the clues and every edit runs here; nothing goes to Meta's API."""
+    private: Muse Spark Open finds the clues and every edit runs here; nothing goes to Meta's API.
+    caption: the text that will be posted with the photos; it is attacked with them and rewritten if it gives away
+    what the edits hide."""
     if not (PRIVATE if private else STANDARD):
         raise HTTPException(503, "This mode is switched off right now. The sample photos still work.")
     # ponytail: no lockout on wrong codes; use a long random code, since each guess is a full upload anyway.
@@ -110,6 +113,8 @@ async def run(request: Request, photos: list[UploadFile] = File(...), private: b
         raise HTTPException(403, "That judges' code doesn't match. The sample photos work without one.")
     if len(photos) > MAX_PHOTOS:
         raise HTTPException(413, f"At most {MAX_PHOTOS} photos at once")
+    if len(caption) > MAX_CAPTION:
+        raise HTTPException(413, f"Captions can be at most {MAX_CAPTION} characters, like Instagram's.")
     allow_live_run(request)
     try:
         loaded = [await read_image(p) for p in photos]
@@ -119,11 +124,15 @@ async def run(request: Request, photos: list[UploadFile] = File(...), private: b
     mock = not private and meta.client is None
     attack = meta.mock_attacker() if mock else functools.partial(meta.attack, private=private)
     read = None if mock else functools.partial(meta.read_text, private=private, effort=meta.ATTACK_EFFORT)
+    rewrite = None if mock else functools.partial(meta.rewrite_caption, private=private)
+    caption = caption.strip()
 
     def events():
         try:
-            yield json.dumps({"type": "start", "metadata": [m for _, m in loaded], "mock": mock, "private": private}) + "\n"
-            for event in agent.run([img for img, _ in loaded], attack=attack, private=private, read=read):
+            yield json.dumps({"type": "start", "metadata": [m for _, m in loaded], "mock": mock, "private": private,
+                              "caption": caption}) + "\n"
+            for event in agent.run([img for img, _ in loaded], attack=attack, private=private, read=read,
+                                   caption=caption, rewrite=rewrite):
                 yield json.dumps(event) + "\n"
         except Exception:
             log.exception("agent run failed")
@@ -141,7 +150,8 @@ def sample(name: str, speed: float = samples.SPEEDUP):
     if name not in samples.SOURCES:
         raise HTTPException(404, "No such sample")
     speed = min(max(speed, 1.0), 8.0)
-    start = {"type": "start", "metadata": [], "mock": False, "replay": speed, "private": name in samples.PRIVATE}
+    start = {"type": "start", "metadata": [], "mock": False, "replay": speed, "private": name in samples.PRIVATE,
+             "caption": samples.CAPTIONS.get(name, "")}
     return ndjson(samples.replay(name, json.dumps(start) + "\n", speed))
 
 
