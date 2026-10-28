@@ -25,6 +25,15 @@ On LeakBench, 24 staged photos with planted fictional secrets, scored by an inde
 These are single runs of a small synthetic benchmark. Earlier runs and the misses that led to fixes are kept in
 [bench/results](bench/results).
 
+## Meta models, each with one job
+
+| Model | What it does here |
+|---|---|
+| **Muse Spark 1.3** | The attacker: reads the photo the way a stranger would and returns the exposure graph as strict JSON. It also runs every re-attack, and LeakBench's separate transcription pass. |
+| **SAM 3.1** | Outlines each clue the attacker names ("shipping label", "door number plate"), so an edit lands on that object and nowhere else. |
+| **Muse Image 1.0** | Replaces each clue with a blank version or erases it, inside the mask. It also generated every staged photo in the samples and LeakBench. |
+| **Muse Spark Open** (open weights, on Baseten) | The attacker in private mode, so a photo never reaches Meta's API. |
+
 ## How it works
 
 1. **Attack** (Muse Spark 1.3): the model builds an exposure graph. Clues (a shipping label, a street sign through the
