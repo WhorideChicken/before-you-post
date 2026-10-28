@@ -17,15 +17,17 @@ photos is fictional; the scenes were generated with Muse Image.
 On LeakBench, 24 staged photos with planted fictional secrets, scored by an independent transcription pass
 ([details](#leakbench)):
 
-- Standard mode removed **42 of 42** planted secrets that were legible, while changing **5%** of the photo. A one-shot
-  "remove all personal information" repaint removed 39 of 42 and changed 23%.
-- Private mode, where nothing is sent to Meta's API, removed **42 of 42**, changing 13%.
+- Standard mode removed **every legible planted secret** in both of its last two runs (41 of 41, 42 of 42), changing
+  **5–8%** of the photo. A one-shot "remove all personal information" repaint changed 22–23% and missed up to 3.
+- Private mode, where nothing is sent to Meta's API, also removed all 42 in both runs, changing about 13%.
 - On 5 staged accounts where a first name, a job and a town sit in three separate posts, checking the account's photos
-  together broke **5 of 5** combinations; checking one photo at a time broke 2 ([details](#account-benchmark)).
+  together broke **14 of 15** combinations over three runs; checking one photo at a time broke 7
+  ([details](#account-benchmark)).
 - No planted value was echoed in the attacker's reports (0 of 33), all 4 prompt-injection photos were still flagged,
   and none of the 4 controls were.
 
-These are single runs of a small synthetic benchmark. Earlier runs and the misses that led to fixes are kept in
+The benchmark is small and synthetic, and the attacker is a sampling model, so single numbers move between runs:
+[which differences hold](#run-to-run-variation). Earlier runs and the misses that led to fixes are kept in
 [bench/results](bench/results).
 
 ## Meta models, each with one job
@@ -79,7 +81,9 @@ open-weight model, on [Baseten's Model API](https://docs.baseten.co/inference/mo
 inputs or outputs of synchronous requests, and masks and edits run on this server (the attacker's boxes, pixelation,
 and inpainting for anything as small as a house number). Serving the 816B-parameter model ourselves would take four
 B300 GPUs ([Meta's deployment guide](https://dev.meta.ai/docs/muse-spark-open/deploy)), so a hosted open-weight
-endpoint is the practical way to keep photos off the closed API. Edits are rougher than in standard mode.
+endpoint is the practical way to keep photos off the closed API. Edits are rougher than in standard mode. We also
+ran SAM 3 open weights on Modal for exact outlines here, measured it, and left it out
+([why](#sam-3-on-modal-tried-not-adopted)).
 
 **On your phone.** The page installs as an app. On Android, a photo shared from the gallery app goes straight to it
 ([Web Share Target](https://developer.chrome.com/docs/capabilities/web-apis/web-share-target)), and the service
@@ -176,9 +180,47 @@ on the same photos twice: one photo at a time, as a single-photo checker would, 
   they rated "specific", and the agent removed a piece, often a single one (a town sign, a name on a cake).
 - Where one photo already rated "specific" on its own (a transit card, a ferry ticket naming the town), both ways
   removed it. Muse Spark Open rates single photos higher, so private mode removed more one photo at a time.
-- Earlier runs on older code gave 2/5 against 4/5 and 3/5 against 5/5 in standard mode: the gap held, its size varies.
+- Earlier runs on slightly older code gave 2/5 against 4/5 and 3/5 against 5/5 in standard mode: the gap held, its
+  size varies.
 - Summaries: [standard](bench/results/accounts/summary.md), [private](bench/results/accounts/private/summary.md).
   Rerun: `uv run --env-file .env python -m bench.accountbench --force [--private]`.
+
+### Run-to-run variation
+
+Each number above comes from one run, and the attacker samples, so we compared the last two runs scene by scene
+(the previous per-scene results are in git history):
+
+- **Noise:** the removal counts (41/41 and 42/42 staged, both 100%; 18/20 and 19/20 real; 14/20 and 15/20 real in
+  private mode) differ by one secret, and with what the verifier could read in the originals.
+- **Not settled:** the share of the photo changed in standard mode fell from 8.0% to 5.3%, down in 13 of 24 scenes
+  and up in 4. The over-editing fix may explain part of it, but one run per version cannot separate that from noise.
+- **Noise, and large:** private mode swings far more per scene (the car plate went from 41% changed to 2%, the window
+  landmark from 16% to 46%), while its mean stayed the same (13.2%, 12.6%).
+- **Holds in every run:** the one-shot repaint changes much more of the photo (22–23% against 5–8%; more in 22 of 24
+  scenes in the latest run), and checking an account together breaks more combinations than one photo at a time
+  (14/15 against 7/15 over three runs, Fisher's exact p = 0.014, with small code changes between those runs).
+
+### SAM 3 on Modal: tried, not adopted
+
+Private mode masks the attacker's box, and Muse Spark Open's boxes are loose (IoU 0.42 with the object's outline,
+[bench/boxcal.py](bench/boxcal.py)). So we ran SAM 3 open weights on Modal ([app/sam3_modal.py](app/sam3_modal.py),
+switched on by `SAM3_URL`) and measured it before deciding:
+
+- **Accuracy:** exact. On the secondhand-listing photo, its outline of the door plate matched SAM 3.1's to within 0.1%
+  of the frame; Muse Spark's box for the same plate overlapped it at IoU 0.07.
+- **Speed:** Modal allows GPUs only with a payment method on file, so this ran on 4 CPU cores: a 70 s cold start,
+  then 30 s for a new photo with four clues (4.7 s for each further clue in the same photo). Private mode takes 19 s
+  per photo today. One measurement each.
+- **What it would fix:** none of private mode's misses. Both box-mask runs removed all 42 staged secrets. On the real
+  photos, 3 of the 5 misses were the injection note, where the attacker reported nothing, so there was nothing to
+  mask. One was a name on an envelope that the re-attack judged safe; standard mode, with SAM 3.1, missed the same
+  name. The last was an email domain in a line of screen text, and lines of text are where SAM finds no outline
+  anyway: SAM 3.1 outlined 8 of 39 edits on those photos.
+- **What it would cost:** a slower private mode, and a third service that receives the photo in the mode whose point
+  is sending it to as few as possible. The gain would mostly be a smaller edited area (about 13% against 5–8% in
+  standard mode), and private mode's run-to-run swings are too large to show that with the runs we could afford.
+
+So private mode keeps box masks. `SAM3_URL` stays as an option for anyone running SAM 3 on their own GPU.
 
 ### What the benchmark taught us
 
