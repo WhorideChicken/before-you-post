@@ -9,7 +9,7 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY app ./app
 COPY static ./static
 
-# The host sets PORT (Render: 10000). MODEL_API_KEY comes from the host's secret env vars; without it only the
-# recorded samples run.
+# The host sets PORT (Render: 10000). MODEL_API_KEY (standard mode) and OPEN_API_KEY (private mode) come from the
+# host's secret env vars; with neither, only the recorded samples run.
 EXPOSE 7860
 CMD ["sh", "-c", ".venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

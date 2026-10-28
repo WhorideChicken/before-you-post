@@ -2,6 +2,7 @@
 
 Record (needs MODEL_API_KEY): uv run --env-file .env python -m app.samples [name ...]
 """
+import asyncio
 import base64
 import json
 import shutil
@@ -18,12 +19,14 @@ PRIVATE = {"desk_private"}  # recorded in private mode: Muse Spark Open, edits o
 SPEEDUP = 4
 
 
-def replay(name: str):
-    """Yield the recorded NDJSON lines, paced like the real run but SPEEDUP times faster."""
+async def replay(name: str, first: str = ""):
+    """Yield `first`, then the recorded NDJSON lines, paced like the real run but SPEEDUP times faster.
+    Async so a replay waits without holding one of the server's worker threads."""
+    yield first
     prev = 0.0
     for line in (SAMPLES / f"{name}.ndjson").read_text(encoding="utf-8").splitlines():
         t = json.loads(line)["t"]
-        time.sleep(min(max(t - prev, 0.0) / SPEEDUP, 5.0))
+        await asyncio.sleep(min(max(t - prev, 0.0) / SPEEDUP, 5.0))
         prev = t
         yield line + "\n"
 
@@ -58,7 +61,8 @@ if __name__ == "__main__":
 
     import sys
 
-    assert meta.client, "recording needs MODEL_API_KEY (run with --env-file .env)"
     names = sys.argv[1:] or list(SOURCES)
+    assert meta.client, "recording needs MODEL_API_KEY (run with --env-file .env)"
+    assert meta.open_client or not PRIVATE & set(names), "private samples need OPEN_API_KEY too"
     with ThreadPoolExecutor(len(names)) as pool:
         list(pool.map(record, names))

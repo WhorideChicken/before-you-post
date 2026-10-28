@@ -7,11 +7,18 @@ import numpy as np
 from PIL import Image, ImageOps
 
 ACTIONS = ("erase", "pixelate", "blur", "keep")
+# A small file can declare a huge canvas (a decompression bomb). JPEG decodes straight to a reduced size via draft(),
+# so it may be big; anything else is decoded in full and must be small enough for a 512 MB host.
+MAX_PIXELS = {"JPEG": 100_000_000, "MPO": 100_000_000, "PNG": 25_000_000, "WEBP": 25_000_000}
 
 
 def load_image(data: bytes, max_side: int | None = None) -> tuple[np.ndarray, dict]:
     """Decode upload to an upright RGB array and report what the file's metadata leaks."""
     img = Image.open(io.BytesIO(data))
+    if img.width * img.height > MAX_PIXELS.get(img.format, 0):
+        raise ValueError(f"{img.format} {img.width}x{img.height} is not an accepted photo")
+    if max_side:
+        img.draft("RGB", (max_side, max_side))
     exif = img.getexif()
     device = " ".join(str(v).strip() for v in (exif.get(0x010F), exif.get(0x0110)) if v)
     metadata = {"gps": bool(exif.get_ifd(0x8825)), "device": device or None}
@@ -84,4 +91,12 @@ if __name__ == "__main__":
         assert not np.array_equal(out[mask], orig[mask]), f"{name} left the masked area untouched"
     back, meta = load_image(encode_png(out))
     assert np.array_equal(back, out) and meta == {"gps": False, "device": None}
+    # A 9000x9000 PNG is a few hundred KB on disk and 243 MB decoded: refused before decoding.
+    bomb = io.BytesIO()
+    Image.new("1", (9000, 9000)).save(bomb, "PNG")
+    try:
+        load_image(bomb.getvalue(), 2048)
+        raise AssertionError("decompression bomb was decoded")
+    except ValueError:
+        pass
     print("pipeline ok")
