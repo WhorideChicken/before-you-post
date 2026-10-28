@@ -1,0 +1,28 @@
+{
+ "id": "car_plate",
+ "kind": "leak",
+ "secrets": [
+  "7KXR392"
+ ],
+ "verified": [
+  "7KXR392"
+ ],
+ "seconds": 14.2,
+ "exposure_before": {
+  "home_location": 3,
+  "financial_or_id": 4,
+  "identity": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "pixelate:license plate:box:pixelate",
+  "pixelate:red hatchback car:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.3785,
+ "survived_naive": [],
+ "changed_naive": 0.2767
+}

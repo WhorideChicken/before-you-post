@@ -1,0 +1,30 @@
+{
+ "id": "kr_door",
+ "kind": "leak",
+ "secrets": [
+  "한빛아파트",
+  "1504"
+ ],
+ "verified": [
+  "한빛아파트",
+  "1504"
+ ],
+ "seconds": 29.7,
+ "exposure_before": {
+  "home_location": 4,
+  "current_location": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:hallway sign:box:pixelate",
+  "pixelate:apartment door plate:box:pixelate",
+  "pixelate:apartment door plate:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0228,
+ "survived_naive": [],
+ "changed_naive": 0.2115
+}

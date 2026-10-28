@@ -1,4 +1,5 @@
 """HTTP layer. Stateless by design: photos live only in memory for the length of one request."""
+import functools
 import itertools
 import json
 import logging
@@ -21,8 +22,10 @@ MAX_PHOTOS = 6  # an account scan sends every photo to the attacker in one reque
 RUNS_PER_HOUR = int(os.environ.get("RUNS_PER_HOUR", "4"))  # per visitor, live model runs only
 RUNS_PER_DAY = int(os.environ.get("RUNS_PER_DAY", "30"))  # whole site: about $3 of API calls at worst
 # Without a key, live runs are off and only the recorded samples play. MOCK=1 runs the loop offline with a
-# placeholder attacker instead, for local development.
-LIVE = meta.client is not None or os.environ.get("MOCK") == "1"
+# placeholder attacker instead, for local development. With only OPEN_API_KEY, live runs are private mode only.
+STANDARD = meta.client is not None or os.environ.get("MOCK") == "1"
+PRIVATE = meta.open_client is not None
+LIVE = STANDARD or PRIVATE
 log = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="Before You Post")
@@ -44,7 +47,7 @@ _lock = threading.Lock()
 def allow_live_run(request: Request) -> None:
     """Rate limit for calls that spend API credits. The last X-Forwarded-For hop is the one the host's proxy added;
     earlier entries are whatever the client sent."""
-    if meta.client is None:
+    if meta.client is None and meta.open_client is None:
         return
     forwarded = request.headers.get("x-forwarded-for")
     ip = forwarded.split(",")[-1].strip() if forwarded else request.client.host
@@ -79,7 +82,7 @@ def ndjson(lines) -> StreamingResponse:
 
 @app.get("/api/status")
 def status():
-    return {"live": LIVE, "mock": meta.client is None}
+    return {"live": LIVE, "standard": STANDARD, "private": PRIVATE, "mock": meta.client is None}
 
 
 def require_live() -> None:
@@ -88,20 +91,23 @@ def require_live() -> None:
 
 
 @app.post("/api/run")
-async def run(request: Request, photos: list[UploadFile] = File(...)):
+async def run(request: Request, photos: list[UploadFile] = File(...), private: bool = Form(False)):
     """Stream the agent's progress as NDJSON: attack, plan, edits, re-attack, done (with the final PNGs).
-    Several photos are scanned as one account: attacked together, so combinations across them count."""
-    require_live()
+    Several photos are scanned as one account: attacked together, so combinations across them count.
+    private: Muse Spark Open finds the clues and every edit runs here; nothing goes to Meta's API."""
+    if not (PRIVATE if private else STANDARD):
+        raise HTTPException(503, "This mode is switched off right now. The sample photos still work.")
     if len(photos) > MAX_PHOTOS:
         raise HTTPException(413, f"At most {MAX_PHOTOS} photos at once")
     loaded = [await read_image(p) for p in photos]
     allow_live_run(request)
-    attack = meta.attack if meta.client else meta.mock_attacker()
+    mock = not private and meta.client is None
+    attack = meta.mock_attacker() if mock else functools.partial(meta.attack, private=private)
 
     def events():
-        yield json.dumps({"type": "start", "metadata": [m for _, m in loaded], "mock": meta.client is None}) + "\n"
+        yield json.dumps({"type": "start", "metadata": [m for _, m in loaded], "mock": mock, "private": private}) + "\n"
         try:
-            for event in agent.run([img for img, _ in loaded], attack=attack):
+            for event in agent.run([img for img, _ in loaded], attack=attack, private=private):
                 yield json.dumps(event) + "\n"
         except Exception as e:
             log.exception("agent run failed")
@@ -115,7 +121,7 @@ def sample(name: str):
     """Replay a recorded run of one of the gallery photos, sped up."""
     if name not in samples.SOURCES:
         raise HTTPException(404, "No such sample")
-    start = {"type": "start", "metadata": [], "mock": False, "replay": samples.SPEEDUP}
+    start = {"type": "start", "metadata": [], "mock": False, "replay": samples.SPEEDUP, "private": name in samples.PRIVATE}
     return ndjson(itertools.chain([json.dumps(start) + "\n"], samples.replay(name)))
 
 

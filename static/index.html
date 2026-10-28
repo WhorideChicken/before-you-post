@@ -31,6 +31,8 @@
   button, a.btn { font: inherit; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; text-decoration: none; }
   a.btn.primary { display: inline-block; background: var(--accent); border-color: var(--accent); color: #fff; }
   .downloads { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .private { display: flex; gap: 10px; align-items: flex-start; max-width: 560px; margin-top: 12px; padding: 12px; border: 1px solid var(--ok); border-radius: 8px; background: var(--card); font-size: 14px; cursor: pointer; }
+  .private input { margin-top: 4px; }
   button:disabled { opacity: .5; cursor: wait; }
   .notice { margin: 16px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
   .notice.warn { border-color: var(--warn); }
@@ -136,9 +138,13 @@
       <label><input id="photo" type="file" accept="image/*" multiple><strong>Choose a photo</strong><br>
         <span class="lvl">or up to 6 from one account, checked together</span></label>
     </div>
-    <p class="lvl">Your photo is sent to the Meta Model API and never stored by this site. During the hackathon the API
-      runs on free credits, under which Meta may use submitted content for product improvement, so prefer staged photos
-      over real personal ones. Live runs are rate limited.</p>
+    <label class="private" id="private-wrap" hidden><input type="checkbox" id="private" checked>
+      <span><strong>Private mode.</strong> Your photo never reaches Meta's API. Muse Spark Open, Meta's open-weight model,
+        finds the clues on Baseten, which keeps no inputs; masks and edits (pixelation, inpainting) run on this server.
+        Edits look rougher than in standard mode.</span></label>
+    <p class="lvl">Nothing is stored by this site. Standard mode sends your photo to the Meta Model API, which during the
+      hackathon runs on free credits under which Meta may use submitted content for product improvement, so prefer
+      staged photos or private mode there. Live runs are rate limited.</p>
   </section>
 
   <p id="status" class="notice" hidden></p>
@@ -185,11 +191,12 @@ const SAMPLES = [
   { name: "desk", label: "Home desk" }, { name: "front_door", label: "Front door" },
   { name: "kr_parcel", label: "Korean parcel" }, { name: "inj_poster", label: "Prompt injection" },
   { name: "account", label: "One account, 3 posts", photos: 3 },
+  { name: "desk_private", label: "Home desk, private mode" },
 ];
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
 const stages = () => [...$("stages").children];
-let originals = [], results = [], touched = new Set(), t0 = 0, timer = 0, statusText = "", eventTime = null;
+let originals = [], results = [], touched = new Set(), t0 = 0, timer = 0, statusText = "", eventTime = null, privateRun = false;
 let boxes = new Map(), clues = {}, linked = "";
 
 function el(tag, props = {}, ...children) {
@@ -400,6 +407,8 @@ async function handle(e) {
     const notes = [];
     if (e.replay) notes.push(`Replaying a recorded run of the real agent, ${e.replay}x faster. Times below are from the real run.`);
     if (e.mock) notes.push("Demo mode: no Meta API key is set, so the attack is a placeholder.");
+    if (e.private) notes.push("Private mode: Muse Spark Open on Baseten finds the clues, and masks and edits run on this server. Nothing is sent to Meta's API.");
+    privateRun = !!e.private;
     if (originals.length > 1) notes.push(`${originals.length} photos from one account: the attacker sees them all at once, so details that are harmless alone but give you away together count too.`);
     e.metadata.forEach((m, i) => m.gps && notes.push(`${originals.length > 1 ? `Photo ${i + 1}` : "This file"} has GPS location data. The safe copy never includes it.`));
     if (notes.length) log("Before anything else", notes);
@@ -420,7 +429,7 @@ async function handle(e) {
       settle(e.exposure, g);
     }
   } else if (e.type === "plan") {
-    statusText = "Editing with SAM 3.1 masks and Muse Image";
+    statusText = privateRun ? "Pixelating and inpainting on this server" : "Editing with SAM 3.1 masks and Muse Image";
     log(`Plan: ${e.text}`, e.stuck ? [`${e.stuck} way(s) in cannot be edited out and stay exposed.`] : []);
   } else if (e.type === "preview") {
     e.images.forEach((b, i) => b && touched.add(i));
@@ -536,11 +545,14 @@ $("photo").onchange = e => {
   if (files.length > 6) return status("Pick at most 6 photos: they are attacked together in one request.", true);
   const body = new FormData();
   files.forEach(f => body.append("photos", f));
+  body.append("private", !$("private-wrap").hidden && $("private").checked);
   begin(files.map(f => URL.createObjectURL(f)), () => fetch("/api/run", { method: "POST", body }));
 };
 fetch("/api/status").then(r => r.json()).then(s => {
   $("own").hidden = !s.live;
   $("live-off").hidden = s.live;
+  $("private-wrap").hidden = !s.private;
+  $("private").disabled = !s.standard;  // private mode is the only live mode on this server
 }).catch(() => {});
 $("samples").append(...SAMPLES.map(s => {
   const srcs = Array.from({ length: s.photos || 1 }, (_, i) => `samples/${s.name}-${i + 1}.jpg`);

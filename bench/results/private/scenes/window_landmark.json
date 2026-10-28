@@ -1,0 +1,30 @@
+{
+ "id": "window_landmark",
+ "kind": "leak",
+ "secrets": [
+  "Meridian",
+  "Pine"
+ ],
+ "verified": [
+  "Meridian",
+  "Pine"
+ ],
+ "seconds": 27.0,
+ "exposure_before": {
+  "current_location": 4,
+  "home_location": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:rooftop sign:box:pixelate",
+  "pixelate:street intersection sign:box:pixelate",
+  "pixelate:street sign:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0514,
+ "survived_naive": [],
+ "changed_naive": 0.3173
+}

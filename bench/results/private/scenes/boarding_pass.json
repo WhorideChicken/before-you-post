@@ -1,0 +1,31 @@
+{
+ "id": "boarding_pass",
+ "kind": "leak",
+ "secrets": [
+  "Okafor",
+  "Q7XK2P"
+ ],
+ "verified": [
+  "Okafor",
+  "Q7XK2P"
+ ],
+ "seconds": 18.4,
+ "exposure_before": {
+  "identity": 4,
+  "current_location": 3,
+  "contact": 4,
+  "routine": 3,
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "pixelate:boarding pass:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1859,
+ "survived_naive": [],
+ "changed_naive": 0.37
+}

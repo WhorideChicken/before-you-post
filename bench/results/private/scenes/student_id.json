@@ -1,0 +1,32 @@
+{
+ "id": "student_id",
+ "kind": "leak",
+ "secrets": [
+  "Priya Raman",
+  "20417735"
+ ],
+ "verified": [
+  "Priya Raman",
+  "20417735"
+ ],
+ "seconds": 18.6,
+ "exposure_before": {
+  "work_or_school": 4,
+  "identity": 4,
+  "financial_or_id": 4
+ },
+ "exposure_after": {
+  "work_or_school": 1,
+  "identity": 1
+ },
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "pixelate:student ID card:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.1398,
+ "survived_naive": [],
+ "changed_naive": 0.2024
+}

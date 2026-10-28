@@ -12,7 +12,9 @@ SAMPLES = Path(__file__).parent.parent / "static" / "samples"
 BENCH = Path(__file__).parent.parent / "bench" / "images"
 # sample name -> LeakBench photos, served as static/samples/{name}-{1..n}.jpg. Several photos = one account scan.
 SOURCES = {"desk": ["desk_parcel"], "front_door": ["front_door"], "kr_parcel": ["kr_parcel"],
-           "inj_poster": ["inj_poster"], "account": ["acct_cup", "acct_class", "acct_town"]}
+           "inj_poster": ["inj_poster"], "account": ["acct_cup", "acct_class", "acct_town"],
+           "desk_private": ["desk_parcel"]}
+PRIVATE = {"desk_private"}  # recorded in private mode: Muse Spark Open, edits on the server
 SPEEDUP = 4
 
 
@@ -27,7 +29,7 @@ def replay(name: str):
 
 
 def record(name: str) -> None:
-    from . import agent, pipeline
+    from . import agent, meta, pipeline
 
     imgs = []
     for i, source in enumerate(SOURCES[name], 1):
@@ -36,7 +38,8 @@ def record(name: str) -> None:
             shutil.copy(BENCH / f"{source}.jpg", src)
         imgs.append(pipeline.load_image(src.read_bytes())[0])
     t0, lines = time.time(), []
-    for event in agent.run(imgs):
+    private = name in PRIVATE
+    for event in agent.run(imgs, attack=lambda ims: meta.attack(ims, private=private), private=private):
         event = {**event, "t": round(time.time() - t0, 1)}
         if event["type"] == "done":
             event["image_urls"] = []

@@ -5,4 +5,5 @@ __pycache__/
 PLAN.md
 # LeakBench outputs that are regenerated on every run
 bench/results/images/
-bench/results/run.log
+bench/results/private/images/
+bench/results/run*.log

@@ -4,7 +4,7 @@ Ground truth is the planted strings, not the attacker's own judgment. A verifier
 text in the original and in each cleaned version; a secret counts only if it was legible in the original.
 Baseline: one Muse Image call told to remove all personal information. Every value in scenes.json is fictional.
 
-Usage: uv run --env-file .env python -m bench.leakbench [--workers 4] [--only id,id] [--force]
+Usage: uv run --env-file .env python -m bench.leakbench [--workers 4] [--only id,id] [--force] [--private]
 """
 import argparse
 import base64
@@ -37,10 +37,12 @@ PRICE = {"in": 1.25e-6, "out": 4.25e-6, "image": 0.01, "sam": 0.0025}
 
 usage = {"in": 0, "out": 0, "image": 0, "sam": 0}
 lock = threading.Lock()
+PRIVATE = False  # --private: Muse Spark Open attacker and on-server edits, results in results/private
 
 
 def track_usage():
-    """Count tokens and calls on the shared client, for a cost estimate of the whole run."""
+    """Count tokens and calls on the shared clients, for a cost estimate of the whole run. Muse Spark Open on
+    Baseten has the same per-token prices as Muse Spark, so their tokens are counted together."""
     c = meta.client
 
     def counted(fn, add):
@@ -59,6 +61,9 @@ def track_usage():
     c.images.edit = counted(c.images.edit, lambda r: usage.__setitem__("image", usage["image"] + 1))
     c.images.generate = counted(c.images.generate, lambda r: usage.__setitem__("image", usage["image"] + 1))
     c.responses.create = counted(c.responses.create, lambda r: usage.__setitem__("sam", usage["sam"] + 1))
+    if meta.open_client:
+        o = meta.open_client
+        o.chat.completions.create = counted(o.chat.completions.create, chat)
 
 
 def norm(s: str) -> str:
@@ -119,7 +124,7 @@ def evaluate(scene: dict) -> dict:
     rec["verified"] = legible(scene["secrets"], transcribe(img))
 
     t = time.time()
-    events = list(agent.run([img]))
+    events = list(agent.run([img], attack=lambda imgs: meta.attack(imgs, private=PRIVATE), private=PRIVATE))
     rec["seconds"] = round(time.time() - t, 1)
     attacks = [e for e in events if e["type"] == "attack"]
     done = events[-1]
@@ -174,6 +179,8 @@ def summarize(recs: list[dict]) -> str:
     with_secrets = [r for r in leaky if r["verified"]]
     lines = [
         f"# LeakBench results ({time.strftime('%Y-%m-%d')})", "",
+        *(["Private mode: Muse Spark Open on Baseten as the attacker, box masks, pixelation and inpainting on the "
+           "server. The verifier and the naive baseline still use Meta's API.", ""] if PRIVATE else []),
         f"{len(ok)} scenes scored ({len(leaky) - len(injections)} leak, {len(injections)} prompt injection, "
         f"{len(controls)} control), {len(recs) - len(ok)} errors. {verified} planted secrets were legible in the "
         "originals and are the ground truth below.", "",
@@ -214,8 +221,13 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--only", default="")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--private", action="store_true")
     args = ap.parse_args()
     assert meta.client, "LeakBench needs MODEL_API_KEY (run with --env-file .env)"
+    if args.private:
+        assert meta.open_client, "--private needs OPEN_API_KEY"
+        global PRIVATE, RESULTS
+        PRIVATE, RESULTS = True, RESULTS / "private"
     track_usage()
     for d in (IMAGES, RESULTS / "scenes", RESULTS / "images"):
         d.mkdir(parents=True, exist_ok=True)

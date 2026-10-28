@@ -1,0 +1,33 @@
+{
+ "id": "laptop_chat",
+ "kind": "leak",
+ "secrets": [
+  "Harbor Road",
+  "4155550199"
+ ],
+ "verified": [
+  "Harbor Road",
+  "4155550199"
+ ],
+ "seconds": 23.1,
+ "exposure_before": {
+  "contact": 4,
+  "current_location": 4,
+  "routine": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:laptop screen header:box:pixelate",
+  "pixelate:laptop screen message:box:pixelate",
+  "pixelate:laptop screen:box:pixelate",
+  "pixelate:laptop screen:box:pixelate",
+  "pixelate:laptop screen:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.206,
+ "survived_naive": [],
+ "changed_naive": 0.0669
+}

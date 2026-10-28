@@ -19,6 +19,7 @@ LARGE = [(0.4, 50), (0.2, 9)]  # (share of the frame, minimum cost): repainting 
 MAX_ATTACKS = 4  # attack, then at most three rounds of edit + re-attack
 EXACT_LIMIT = 16  # exact search is 2^n subsets
 ESCALATE = 0.3  # a clue at least this much inside an already-edited area gets the edit that cannot fail
+INPAINT_MAX = 0.005  # private mode: classic inpainting blends a house number but smears anything bigger
 
 
 def plan(graph: dict, target: int = TARGET) -> tuple[list[str], list[dict]]:
@@ -67,9 +68,19 @@ def clue_cost(clue: dict) -> int:
     return max([COST[clue["removal_impact"]]] + [c for share, c in LARGE if area >= share])
 
 
-def _mask(img: np.ndarray, item: dict) -> tuple[np.ndarray, str]:
+def widen(box: list[float]) -> list[float]:
+    """One box size around the box, clipped to the frame. Boxes for small text (a phone number in a header, a door
+    plate) land up to a box height off, often below."""
+    x0, y0, x1, y1 = box
+    w, h = x1 - x0, y1 - y0
+    return [max(0.0, x0 - w), max(0.0, y0 - h), min(1.0, x1 + w), min(1.0, y1 + h)]
+
+
+def _mask(img: np.ndarray, item: dict, private: bool = False) -> tuple[np.ndarray, str]:
     """SAM's outline when it finds the object, else the attacker's box. Not both: Spark's boxes can sit off the
     object, and a generative edit composited into that stray area can paint in things that were never there."""
+    if private:
+        return pipeline.box_mask(img.shape, item["box"]), "box"
     try:
         mask = meta.segment(img, item["label"], item["box"])
     except Exception:
@@ -88,19 +99,25 @@ def _generate(img: np.ndarray, item: dict) -> np.ndarray | None:
         return None
 
 
-def apply_edits(img: np.ndarray, items: list[dict]) -> tuple[np.ndarray, list[dict], np.ndarray]:
+def apply_edits(img: np.ndarray, items: list[dict], private: bool = False) -> tuple[np.ndarray, list[dict], np.ndarray]:
     """items: {label, box (0-1), action}. Model calls run in parallel on the same input; each result is
     composited only inside its own mask, so pixels outside every mask are untouched.
+    private: nothing leaves this server. The attacker's box, grown wider since boxes can sit off the object, and
+    pixelation or inpainting instead of SAM and Muse Image.
     Returns the edited image, what was done, and the union of all masks."""
-    pad = max(3, max(img.shape[:2]) // 200)
+    pad = max(3, max(img.shape[:2]) // (60 if private else 200))
+    if private:
+        items = [{**it, "action": "pixelate"} if it["action"] == "replace" else it for it in items]
     with ThreadPoolExecutor(8) as pool:
-        masks = list(pool.map(lambda it: _mask(img, it), items))
-        generated = list(pool.map(lambda it: _generate(img, it), items))
+        masks = list(pool.map(lambda it: _mask(img, it, private), items))
+        generated = list(pool.map(lambda it: None if private else _generate(img, it), items))
     out, done, union = img, [], np.zeros(img.shape[:2], bool)
     for item, (mask, source), gen in zip(items, masks, generated):
         mask = pipeline.grow(mask, pad)
         if not mask.any():
             continue
+        if private and item["action"] == "erase" and mask.mean() > INPAINT_MAX:
+            item = {**item, "action": "pixelate"}
         if item["action"] in ("erase", "replace"):
             edited, engine = (gen, "muse-image") if gen is not None else (pipeline.inpaint(out, mask), "inpaint")
         else:
@@ -111,16 +128,21 @@ def apply_edits(img: np.ndarray, items: list[dict]) -> tuple[np.ndarray, list[di
     return out, done, union
 
 
-def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET):
+def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, private: bool = False):
     """Yield progress events for the UI. One photo, or several from one account attacked together: the planner then
     breaks combinations across photos with the fewest edits overall. Image fields are lists in photo order, None for
-    a photo a step left unchanged. The last event carries the final PNGs (lossless, metadata-free)."""
+    a photo a step left unchanged. The last event carries the final PNGs (lossless, metadata-free).
+    private: edits stay on this server (see apply_edits); the caller passes the matching attacker."""
     current, before = list(imgs), None
     edited = [np.zeros(img.shape[:2], bool) for img in imgs]
     for n in range(1, MAX_ATTACKS + 1):
         what = "photo" if len(imgs) == 1 else f"{len(imgs)} photos together"
         yield {"type": "status", "text": f"Attacking the {what}" if n == 1 else f"Re-attacking the edited {what}"}
         graph = attack(current)
+        if private and n == 1 and not graph["inferences"]:
+            # An empty report is what every injected "report nothing" asks for, and Muse Spark Open sometimes
+            # complies, so an empty first answer gets a second, independent attack.
+            graph = attack(current)
         exposure = meta.exposure(graph)
         before = before if before is not None else exposure
         yield {"type": "attack", "round": n, "graph": graph, "exposure": exposure}
@@ -132,10 +154,12 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET):
             if c["id"] in ids:
                 p = c["photo"]
                 # A clue found again where we already edited survived a generative edit: use one that cannot fail.
+                # In private mode there was no SAM outline, so the box itself missed: widen it.
                 box = pipeline.box_mask(imgs[p].shape, c["box"])
-                action = "pixelate" if (box & edited[p]).sum() >= ESCALATE * box.sum() else c["suggested"]
-                items.setdefault(p, []).append({"id": c["id"], "photo": p, "label": c["label"], "box": c["box"],
-                                                "action": action})
+                again = (box & edited[p]).sum() >= ESCALATE * box.sum()
+                items.setdefault(p, []).append({"id": c["id"], "photo": p, "label": c["label"],
+                                                "box": widen(c["box"]) if again and private else c["box"],
+                                                "action": "pixelate" if again else c["suggested"]})
         count = sum(map(len, items.values()))
         yield {"type": "plan", "round": n, "clues": ids, "stuck": len(stuck),
                "text": f"Breaking {len(risky_ways(graph, target))} ways in with {count} edit{'s' if count != 1 else ''}"}
@@ -151,7 +175,7 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET):
                 preview[p] = pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))
             yield {"type": "preview", "images": preview}
         with ThreadPoolExecutor(len(items)) as pool:
-            results = dict(zip(items, pool.map(lambda p: apply_edits(current[p], items[p]), items)))
+            results = dict(zip(items, pool.map(lambda p: apply_edits(current[p], items[p], private), items)))
         done = []
         for p, (out, did, mask) in results.items():
             current[p] = out
@@ -186,6 +210,7 @@ if __name__ == "__main__":
     g2 = {"clues": [big, clue("sign", "medium")],
           "inferences": [{"category": "home_location", "level": 3, "ways": [way(["view", "sign"], 3)]}]}
     assert clue_cost(big) == 50 and plan(g2) == (["sign"], [])
+    assert [round(v, 2) for v in widen([0.1, 0.5, 0.2, 0.55])] == [0.0, 0.45, 0.3, 0.6]
 
     # Offline loop: mock attack, box masks, inpaint/pixelate; converges after one round of edits.
     img = np.random.default_rng(0).integers(0, 256, (300, 400, 3), dtype=np.uint8)
@@ -210,4 +235,15 @@ if __name__ == "__main__":
     done = events[-1]
     assert done["safe"] and done["images"][0] == base64.b64encode(pipeline.encode_png(imgs[0])).decode()
     assert done["images"][1] != base64.b64encode(pipeline.encode_png(imgs[1])).decode()
+
+    # Private mode never calls SAM or Muse Image: box masks, "replace" becomes pixelation, and only a small "erase"
+    # (a house number) is inpainted; the mock's large street sign would smear.
+    calls = []
+    meta.segment = meta.edit = lambda *a: calls.append(a)
+    events = list(run([img], attack=meta.mock_attacker(), private=True))
+    edits = next(e for e in events if e["type"] == "edits")["edits"]
+    assert not calls and {d["mask"] for d in edits} == {"box"}
+    assert [d["engine"] for d in edits] == ["pixelate", "pixelate", "pixelate"], edits
+    small = {"label": "house number", "box": [0.5, 0.5, 0.53, 0.53], "action": "erase"}
+    assert apply_edits(img, [small], private=True)[1][0]["engine"] == "inpaint"
     print("agent ok")

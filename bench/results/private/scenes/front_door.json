@@ -1,0 +1,32 @@
+{
+ "id": "front_door",
+ "kind": "leak",
+ "secrets": [
+  "Willow Lane",
+  "Hartleys"
+ ],
+ "verified": [
+  "Willow Lane",
+  "Hartleys"
+ ],
+ "seconds": 26.2,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3,
+  "other_people": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:doormat:box:pixelate",
+  "pixelate:street sign:box:pixelate",
+  "pixelate:front door:box:pixelate",
+  "pixelate:doormat:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.2492,
+ "survived_naive": [],
+ "changed_naive": 0.2847
+}
