@@ -16,15 +16,26 @@ BENCH = Path(__file__).parent.parent / "bench" / "images"
 SOURCES = {"desk": ["desk_parcel"], "front_door": ["front_door"],
            "inj_poster": ["inj_poster"], "account": ["acct_cup", "acct_class", "acct_town"],
            "desk_private": ["desk_parcel"], "kr_market": ["kr_market"], "kr_school": ["kr_school"],
-           "kr_moving": ["kr_moving"]}
+           "kr_moving": ["kr_moving"],
+           # An imported Instagram export: more than six posts, so attacked one by one and linked (meta.MAX_TOGETHER)
+           "export": ["ctrl_food", "acct_yuna_cake", "ctrl_landscape", "acct_yuna_notes", "ctrl_desk", "kr_moving",
+                      "acct_yuna_shirt", "ctrl_brand"]}
 PRIVATE = {"desk_private"}  # recorded in private mode: Muse Spark Open, edits on the server
 # What each post would say. Captions often name what the photo's edits hide. Fictional, like the photos.
 CAPTIONS = {
     "kr_market": "에어프라이어 팝니다 (6개월 사용) 🍟 직거래는 솔빛로 88 앞에서 가능해요 #중고거래",
     "kr_school": "우리 딸 드디어 초등학생 🌸 1학년 3반 친구들이랑 잘 지내자! #입학식 #해오름초등학교 #한별시맘",
     "kr_moving": "이사 끝! 🏠 별빛타워 보이는 집으로 왔어요. 집들이는 다음 주에 🙌 #새집 #한별시",
+    "export": ["오늘 저녁은 파스타 🍝", "생일 축하해줘서 고마워 💕 #생일", "주말 산책 🌿", "실습 3주차.. 오늘도 버틴다 🩺",
+               "과제 지옥 📚", "드디어 이사 끝 🏠 #새집 #집들이", "완주 기념 🏃‍♀️ #마라톤 #첫완주", "이거 진짜 맛있음 😋"],
 }
 SPEEDUP = 4
+
+
+def captions(name: str) -> list[str]:
+    """One per photo of the sample: a single string is the first photo's caption."""
+    c = CAPTIONS.get(name, "")
+    return list(c) if isinstance(c, list) else [c]
 
 
 async def replay(name: str, first: str = "", speed: float = SPEEDUP):
@@ -52,7 +63,7 @@ def record(name: str) -> None:
     private = name in PRIVATE
     events = agent.run(imgs, attack=functools.partial(meta.attack, private=private), private=private,
                        read=functools.partial(meta.read_text, private=private, effort=meta.ATTACK_EFFORT),
-                       caption=CAPTIONS.get(name, ""), rewrite=functools.partial(meta.rewrite_caption, private=private))
+                       caption=captions(name), rewrite=functools.partial(meta.rewrite_caption, private=private))
     for event in events:
         event = {**event, "t": round(time.time() - t0, 1)}
         if event["type"] == "done":

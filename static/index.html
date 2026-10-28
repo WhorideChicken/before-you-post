@@ -102,7 +102,7 @@
   .switch input:checked + .track::after { transform: translateX(16px); }
   .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
   .switch input:disabled + .track { opacity: .6; }
-  .own.locked .drop, .own.locked .switch, .own.locked #shared, .own.locked .capin { opacity: .45; filter: grayscale(1); pointer-events: none; }
+  .own.locked .drop, .own.locked .switch, .own.locked #shared, .own.locked .capin, .own.locked .import { opacity: .45; filter: grayscale(1); pointer-events: none; }
   .code { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px;
           border: 1px solid var(--accent); border-radius: 12px; background: var(--card); }
   .code input { flex: 0 1 200px; font: 600 16px ui-monospace, Consolas, monospace; padding: 9px 12px; border-radius: 8px;
@@ -173,6 +173,9 @@
   .keep label { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; cursor: pointer; }
   .keep .back { margin: 8px 0 0; color: var(--warn); }
   .cap-text { margin: 8px 0 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .caps { list-style: none; margin: 0; padding: 0; }
+  .caps li + li { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .import { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
   .keep del { color: var(--warn); }
   .capin { display: grid; gap: 6px; }
   .capin textarea { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); resize: vertical; }
@@ -307,9 +310,7 @@
         </section>
         <section class="keep" id="cap" hidden aria-labelledby="cap-title">
           <b id="cap-title">Caption</b>
-          <p class="cap-text" id="cap-new"></p>
-          <p class="muted small" id="cap-note"></p>
-          <button class="btn" id="cap-copy" type="button" hidden>Copy caption</button>
+          <ul class="caps" id="cap-list"></ul>
         </section>
       </div>
       <aside class="dossier" aria-live="polite">
@@ -332,8 +333,8 @@
 
   <section id="own">
     <h2>Check your own photo</h2>
-    <p class="lede">One photo, or up to six from the same account: they are attacked together, so details that are
-      harmless alone but give you away in combination count too.</p>
+    <p class="lede">One photo, or up to 20 from the same account, or your Instagram export: they are checked together,
+      so details that are harmless alone but give you away in combination count too.</p>
     <div class="own locked" id="own-form">
       <p class="notice" id="live-off" hidden>Checking your own photos opens for the judging period. Until then, the
         samples above replay real runs of the agent, recorded as they happened.</p>
@@ -353,6 +354,12 @@
         <span class="muted small">JPEG, PNG or WebP, up to 20 MB each</span>
       </label>
       <button class="btn primary" id="shared" type="button" hidden></button>
+      <div class="import">
+        <label class="btn" id="import-wrap">Import an Instagram export (.zip)
+          <input id="zip" class="sr-only" type="file" accept=".zip,application/zip"></label>
+        <span class="muted small">Read on your device. Only the photos and captions of your latest 20 posts are sent,
+          and they are checked as one account.</span>
+      </div>
       <label class="switch" id="private-wrap" hidden>
         <input type="checkbox" id="private" role="switch" checked><span class="track" aria-hidden="true"></span>
         <span><b>Private mode</b><br><span class="muted small">Nothing goes to Meta's API: Muse Spark Open, Meta's open-weight
@@ -395,18 +402,18 @@ const ACTION = { erase: "Erased", replace: "Replaced with a blank version", pixe
 const SAMPLES = [
   { name: "desk", label: "Home desk", note: "Label, badge, screen, street sign" },
   { name: "kr_market", label: "Secondhand listing", note: "Address on the box behind it" },
-  { name: "kr_school", label: "First day of school", note: "Child's name, school and class" },
+  { name: "kr_school", label: "First day of school", note: "The caption names the school too" },
   { name: "kr_moving", label: "Moving day", note: "Door code, a landmark tower" },
   { name: "account", label: "One account", note: "3 posts, safe alone, not together", photos: 3 },
   { name: "inj_poster", label: "Prompt injection", note: "A poster tells the AI to lie" },
   { name: "desk_private", label: "Private mode", note: "Same desk, nothing sent to Meta" },
-  { name: "front_door", label: "Front door", note: "House number and street" },
+  { name: "export", label: "Instagram export", note: "8 posts and captions, as one account", photos: 8 },
 ];
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
 const stages = () => [...$("stages").children];
 let originals = [], results = [], touched = new Set(), t0 = 0, timer = 0, statusText = "", eventTime = null, privateRun = false;
-let boxes = new Map(), clues = {}, linked = "", round = 1, firstGraph = null, finals = [], hidden = [], captionWas = "";
+let boxes = new Map(), clues = {}, linked = "", round = 1, firstGraph = null, finals = [], hidden = [], captionsWas = [], captionsNow = [];
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -770,8 +777,9 @@ async function handle(e) {
     e.metadata.forEach((m, i) => m.gps && notes.push(`${originals.length > 1 ? `Photo ${i + 1}` : "This file"} has GPS location data. The safe copy never includes it.`));
     if (notes.length) log("Before anything else", notes);
     step("attack", "active", privateRun ? "Muse Spark Open" : "Muse Spark");
-    captionWas = e.caption || "";
-    showCaption(captionWas);
+    captionsWas = e.captions || (e.caption ? [e.caption] : []);
+    captionsNow = [...captionsWas];
+    showCaptions();
   } else if (e.type === "status") {
     statusText = e.text;
     scanning(true);
@@ -805,7 +813,8 @@ async function handle(e) {
       (e.doubt ? " The attacker still reported less than that, so this result is not verified." : "") });
   } else if (e.type === "caption") {
     log("Caption rewritten", e.removed.map(l => `Taken out: ${l}`));
-    showCaption(e.caption);
+    captionsNow[e.photo ?? 0] = e.caption;
+    showCaptions();
   } else if (e.type === "outlines") {
     // The attacker's boxes are estimates; SAM's outlines are where the objects really are.
     for (const [id, o] of Object.entries(e.outlines)) {
@@ -843,7 +852,8 @@ async function handle(e) {
     finals = [...urls];
     offer(urls);
     offerKeep(e.hidden || []);
-    if (e.caption != null) showCaption(e.caption, true);
+    if (e.captions || e.caption != null) captionsNow = e.captions || [e.caption];
+    showCaptions(true);
     settle(e.after);
     $("stamp").replaceChildren(el("span", { className: e.safe ? "shiny" : "", textContent: e.unverified || e.doubt ? "Unchecked" : !e.safe ? "Exposed" : checked ? "Verified" : "Clean" }));
     $("stamp").classList.toggle("ok", e.safe);
@@ -941,17 +951,85 @@ function givesBack(kept) {
     .map(inf => `${CATEGORY[inf.category]}: ${LEVEL[level(inf, stillHidden)]}`);
 }
 
-// The caption as it will be posted: what the agent took out of the original is struck through below it.
-function showCaption(text, final = false) {
-  $("cap").hidden = !captionWas;
-  if (!captionWas) return;
-  const now = new Set(text.split(/\s+/)), gone = captionWas.split(/\s+/).filter(t => t && !now.has(t));
-  $("cap-new").textContent = text;
-  $("cap-note").replaceChildren(...(gone.length ? ["Taken out: ", ...gone.flatMap((t, i) => [i ? " " : "", el("del", { textContent: t })])]
-    : [final ? "Nothing in the caption needed to change." : "Checked together with the photos."]));
-  $("cap-copy").hidden = !final;
-  $("cap-copy").textContent = "Copy caption";
-  $("cap-copy").onclick = () => navigator.clipboard?.writeText(text).then(() => { $("cap-copy").textContent = "Copied"; });
+// Captions as they will be posted, one per captioned photo: what the agent took out is struck through below each.
+function showCaptions(final = false) {
+  const items = captionsWas.map((was, i) => [was, captionsNow[i] ?? was, i]).filter(([was]) => was);
+  $("cap").hidden = !items.length;
+  $("cap-title").textContent = items.length > 1 ? "Captions" : "Caption";
+  $("cap-list").replaceChildren(...items.map(([was, now, i]) => {
+    const kept = new Set(now.split(/\s+/)), gone = was.split(/\s+/).filter(t => t && !kept.has(t));
+    const copy = el("button", { className: "btn", type: "button", textContent: "Copy caption", hidden: !final });
+    copy.onclick = () => navigator.clipboard?.writeText(now).then(() => { copy.textContent = "Copied"; });
+    return el("li", {}, ...(originals.length > 1 ? [el("small", { className: "muted", textContent: `Photo ${i + 1}` })] : []),
+      el("p", { className: "cap-text", textContent: now }),
+      el("p", { className: "muted small" }, ...(gone.length
+        ? ["Taken out: ", ...gone.flatMap((t, k) => [k ? " " : "", el("del", { textContent: t })])]
+        : [final ? "Nothing here needed to change." : "Checked together with the photos."])),
+      copy);
+  }));
+}
+
+// Instagram's "Download your information" ZIP, read here with the browser's own inflater: the export never leaves
+// this device, only the latest posts' photos and captions do.
+async function zipEntries(file) {
+  const tail = new DataView(await file.slice(Math.max(0, file.size - 65557)).arrayBuffer());
+  let end = tail.byteLength - 22;
+  while (end >= 0 && tail.getUint32(end, true) !== 0x06054b50) end--;
+  if (end < 0) throw new Error("that is not a ZIP file");
+  const count = tail.getUint16(end + 10, true), size = tail.getUint32(end + 12, true), at = tail.getUint32(end + 16, true);
+  if (at === 0xffffffff) throw new Error("this export is over 4 GB; ask Instagram for a smaller date range");
+  const dir = new DataView(await file.slice(at, at + size).arrayBuffer()), names = new TextDecoder();
+  const entries = [];
+  for (let p = 0, i = 0; i < count; i++) {
+    const len = dir.getUint16(p + 28, true);
+    entries.push({ name: names.decode(new Uint8Array(dir.buffer, p + 46, len)), method: dir.getUint16(p + 10, true),
+                   size: dir.getUint32(p + 20, true), at: dir.getUint32(p + 42, true) });
+    p += 46 + len + dir.getUint16(p + 30, true) + dir.getUint16(p + 32, true);
+  }
+  return entries;
+}
+
+async function zipRead(file, entry) {
+  const head = new DataView(await file.slice(entry.at, entry.at + 30).arrayBuffer());
+  const start = entry.at + 30 + head.getUint16(26, true) + head.getUint16(28, true);
+  const raw = file.slice(start, start + entry.size);
+  if (entry.method === 0) return raw;
+  if (entry.method !== 8) throw new Error("this ZIP uses a compression the browser cannot read");
+  return new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob();
+}
+
+// Instagram writes UTF-8 text as Latin-1 escapes ("Ã¬..." for Korean); decode it back when that is what it is.
+const unmangle = t => !/[\u0080-ÿ]/.test(t) || /[^\u0000-ÿ]/.test(t) ? t
+  : (() => { try { return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(t, c => c.charCodeAt(0))); } catch { return t; } })();
+
+async function importInstagram(file) {
+  status("Reading the export on this device");
+  const entries = await zipEntries(file);
+  const find = uri => entries.find(e => e.name === uri || e.name.endsWith("/" + uri));
+  const posts = [];
+  for (const e of entries.filter(e => /posts_\d+\.json$/.test(e.name))) {
+    const data = JSON.parse(await (await zipRead(file, e)).text());
+    for (const post of Array.isArray(data) ? data : Object.values(data).flat()) {
+      const media = (post?.media || []).find(m => /\.(jpe?g|png|webp)$/i.test(m.uri || "") && find(m.uri));
+      if (media) posts.push({ entry: find(media.uri), caption: unmangle(post.title || media.title || ""),
+                              at: media.creation_timestamp || post.creation_timestamp || 0 });
+    }
+  }
+  if (!posts.length) entries.filter(e => /media\/posts\/.+\.(jpe?g|png|webp)$/i.test(e.name))
+    .forEach(e => posts.push({ entry: e, caption: "", at: 0 }));
+  if (!posts.length) return status("No post photos found in this export. Choose the ZIP from Instagram's \"Download your information\".", true);
+  const latest = posts.sort((a, b) => b.at - a.at).slice(0, 20).reverse();
+  const type = name => /\.png$/i.test(name) ? "image/png" : /\.webp$/i.test(name) ? "image/webp" : "image/jpeg";
+  const files = await Promise.all(latest.map(async p => new File([await zipRead(file, p.entry)], p.entry.name.split("/").pop(), { type: type(p.entry.name) })));
+  check(files, latest.map(p => p.caption));
+}
+
+// More than six photos go up shrunk to the size the server would use anyway, so twenty fit in one upload.
+async function shrink(file) {
+  const bitmap = await createImageBitmap(file), scale = Math.min(1, 1536 / Math.max(bitmap.width, bitmap.height));
+  const canvas = el("canvas", { width: Math.round(bitmap.width * scale), height: Math.round(bitmap.height * scale) });
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return new File([await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.9))], file.name, { type: "image/jpeg" });
 }
 
 let running = false, server = { live: false, code: false };
@@ -960,7 +1038,7 @@ let running = false, server = { live: false, code: false };
 function lockUpload() {
   const locked = !server.live || (server.code && !$("code").value.trim());
   $("own-form").classList.toggle("locked", locked);
-  $("photo").disabled = $("shared").disabled = locked || running;
+  $("photo").disabled = $("shared").disabled = $("zip").disabled = locked || running;
 }
 
 function busy(on) {
@@ -1054,17 +1132,24 @@ $("stages").addEventListener("mouseleave", () => link([]));
 addEventListener("resize", () => link([]));
 $("tabs").onclick = e => e.target.dataset.show && originals.length && show(e.target.dataset.show);
 
-function check(files) {
+async function check(files, captions = null) {
   files = [...files].filter(f => f.type.startsWith("image/"));
   if (!files.length) return;
-  if (files.length > 6) return status("Pick at most 6 photos: they are attacked together in one request.", true);
+  if (files.length > 20) return status("Pick at most 20 photos from one account.", true);
+  const sent = files.length > 6 ? await Promise.all(files.map(shrink)) : files;
   const body = new FormData();
-  files.forEach(f => body.append("photos", f));
+  sent.forEach(f => body.append("photos", f));
   body.append("private", !$("private-wrap").hidden && $("private").checked);
   body.append("code", $("code").value.trim());
-  body.append("caption", $("caption").value.trim());
+  if (captions) body.append("captions", JSON.stringify(captions));
+  else body.append("caption", $("caption").value.trim());
   begin(files.map(f => URL.createObjectURL(f)), () => fetch("/api/run", { method: "POST", body }));
 }
+$("zip").onchange = e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (file) importInstagram(file).catch(err => status("Could not read the export: " + err.message, true));
+};
 $("photo").onchange = e => { const files = [...e.target.files]; e.target.value = ""; check(files); };
 const drop = $("drop");
 drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
@@ -1106,7 +1191,7 @@ navigator.serviceWorker?.register("/sw.js");
 $("samples").append(...SAMPLES.map(s => {
   const srcs = Array.from({ length: s.photos || 1 }, (_, i) => `samples/${s.name}-${i + 1}.jpg`);
   const b = el("button", { className: "spot" },
-    el("div", { className: "thumbs" }, ...srcs.map(src => el("img", { src, alt: "", loading: "lazy" }))),
+    el("div", { className: "thumbs" }, ...srcs.slice(0, 3).map(src => el("img", { src, alt: "", loading: "lazy" }))),
     el("span", { className: "meta" }, el("b", { textContent: s.label }), el("small", { textContent: s.note })));
   b.onclick = () => begin(srcs, () => fetch(`/api/sample/${s.name}`));
   return b;

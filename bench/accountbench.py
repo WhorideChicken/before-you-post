@@ -27,6 +27,9 @@ from bench.leakbench import IMAGES, changed, legible, transcribe
 
 ROOT = Path(__file__).parent
 RESULTS = ROOT / "results" / "accounts"
+# --decoys: everyday posts mixed in, so the account has 7 photos and takes the large path (attacked one by one, then
+# linked in text). The combination is still only in the account's own three photos.
+DECOYS: list[str] = []
 PRIVATE = False
 
 
@@ -65,6 +68,10 @@ def evaluate(account: dict) -> dict:
                                   for ev in alone]
     rec["single"] = score(imgs, [finals(ev)[0] for ev in alone], rec["verified"], alone)
 
+    if DECOYS:  # interleaved: decoy, post, decoy, post, decoy, post, decoy
+        extra = [pipeline.load_image((IMAGES / f"{d}.jpg").read_bytes())[0] for d in DECOYS]
+        imgs = [x for pair in zip(extra, imgs + [None]) for x in pair if x is not None]
+    rec["photos"] = len(imgs)
     t = time.time()
     together = list(agent.run(imgs, attack=attack, private=PRIVATE, read=read))
     rec["account_seconds"] = round(time.time() - t, 1)
@@ -99,13 +106,15 @@ def summarize(recs: list[dict]) -> str:
 
     lines = [
         f"# Account LeakBench ({time.strftime('%Y-%m-%d')}, {mode})", "",
-        f"{n} staged accounts of 3 photos, {len(recs) - n} errors. In each, one photo shows a first name, one a kind of "
+        f"{n} staged accounts of 3 photos{' plus 4 everyday posts each (7 photos, attacked one by one and linked)' if DECOYS else ''}, "
+        f"{len(recs) - n} errors. In each, one photo shows a first name, one a kind of "
         "job or routine, one a town: harmless alone, identifying together. A combination is broken when at least one "
         "of its legible pieces is gone from the final photos, as read by a separate transcription pass.", "",
         "| | One photo at a time | As one account |", "|---|---|---|",
         f"| Combinations broken | {sum(r['single']['broken'] for r in ok)}/{n} | {sum(r['account']['broken'] for r in ok)}/{n} |",
         f"| Edits made | {total('single', 'edits')} | {total('account', 'edits')} |",
-        f"| Photos changed | {total('single', 'photos_changed')}/{3 * n} | {total('account', 'photos_changed')}/{3 * n} |",
+        f"| Photos changed | {total('single', 'photos_changed')}/{3 * n} "
+        f"| {total('account', 'photos_changed')}/{sum(r.get('photos', 3) for r in ok)} |",
         f"| Share of each photo changed (mean) | {100 * np.mean([r['single']['changed'] for r in ok]):.1f}% "
         f"| {100 * np.mean([r['account']['changed'] for r in ok]):.1f}% |",
         f"| Time per account (mean, the three single runs in parallel) | {np.mean([r['single_seconds'] for r in ok]):.0f} s "
@@ -127,16 +136,19 @@ def summarize(recs: list[dict]) -> str:
 
 
 def main():
-    global PRIVATE, RESULTS
+    global PRIVATE, RESULTS, DECOYS
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--private", action="store_true")
     ap.add_argument("--only", default="")
+    ap.add_argument("--decoys", action="store_true", help="add 4 everyday posts to each account (7 photos)")
     args = ap.parse_args()
     assert meta.client, "the verifier needs MODEL_API_KEY (run with --env-file .env)"
     if args.private:
         assert meta.open_client, "--private needs OPEN_API_KEY"
         PRIVATE, RESULTS = True, RESULTS / "private"
+    if args.decoys:
+        DECOYS, RESULTS = ["ctrl_food", "ctrl_landscape", "ctrl_desk", "ctrl_brand"], RESULTS / "decoys"
     leakbench.track_usage()
     (RESULTS / "scenes").mkdir(parents=True, exist_ok=True)
     accounts = json.loads((ROOT / "accounts.json").read_text(encoding="utf-8"))

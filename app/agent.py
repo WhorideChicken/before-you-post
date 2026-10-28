@@ -184,19 +184,21 @@ def _text_check(reading) -> dict | None:
 
 
 def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, private: bool = False, read=None,
-        caption: str = "", rewrite=None):
+        caption: str | list[str] = "", rewrite=None):
     """Yield progress events for the UI. One photo, or several from one account attacked together: the planner then
     breaks combinations across photos with the fewest edits overall. Image fields are lists in photo order, None for
     a photo a step left unchanged. The last event carries the final PNGs (lossless, metadata-free).
     private: edits stay on this server (see apply_edits); the caller passes the matching attacker.
     read: transcribes one photo (meta.read_text); with it, a deterministic text check runs beside the first attack.
-    caption: what will be posted with the photos, attacked with them; rewrite(caption, details) removes details
-    from it (meta.rewrite_caption), and every re-attack sees the rewritten caption."""
+    caption: what will be posted, one per photo (or one for the first), attacked with the photos;
+    rewrite(caption, details) removes details from one (meta.rewrite_caption), and every re-attack sees the result."""
     current, before, failed, doubt, retried = list(imgs), None, False, False, False
     hidden = []  # what was edited out, one entry per object across rounds, so the owner can choose to keep one
+    captions = [caption] if isinstance(caption, str) else list(caption)
+    captions += [""] * (len(imgs) - len(captions))
 
     def strike(**kw):
-        return attack(current, **kw, **({"caption": caption} if caption else {}))
+        return attack(current, **kw, **({"caption": list(captions)} if any(captions) else {}))
     edited = [np.zeros(img.shape[:2], bool) for img in imgs]
     tried = [[] for _ in imgs]  # boxes already set out to edit, per photo
     for n in range(1, MAX_ATTACKS + 1):
@@ -242,7 +244,7 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
             outlines = {i: _bounds(m) for i, (m, source) in known.items() if source != "box"}
             if outlines:
                 yield {"type": "outlines", "model": "SAM 3" if private else "SAM 3.1", "outlines": outlines}
-        ids, stuck = plan(graph, target, captions=bool(caption and rewrite))
+        ids, stuck = plan(graph, target, captions=bool(any(captions) and rewrite))
 
         def inside(c):
             m = pipeline.box_mask(imgs[c["photo"]].shape, c["box"])
@@ -281,8 +283,11 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
                 preview[p] = pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))
             yield {"type": "preview", "images": preview}
         if words:
-            caption = rewrite(caption, [f"{c['label']}: {c['observation']}" for c in words])
-            yield {"type": "caption", "round": n, "caption": caption, "removed": [c["label"] for c in words]}
+            for p in sorted({c["photo"] for c in words}):
+                said = [c for c in words if c["photo"] == p]
+                captions[p] = rewrite(captions[p], [f"{c['label']}: {c['observation']}" for c in said])
+                yield {"type": "caption", "round": n, "photo": p, "caption": captions[p],
+                       "removed": [c["label"] for c in said]}
         if not items:
             continue
         with ThreadPoolExecutor(len(items)) as pool:
@@ -303,7 +308,7 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
                "images": [pipeline.encode_jpeg_b64(current[p]) if p in results else None for p in range(len(imgs))]}
     yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "unverified": failed,
            "doubt": doubt, "safe": not failed and not doubt and not ids and not stuck,
-           "hidden": [{**h, "mask": _alpha_png(h["mask"])} for h in hidden], "caption": caption,
+           "hidden": [{**h, "mask": _alpha_png(h["mask"])} for h in hidden], "captions": captions,
            "images": [base64.b64encode(pipeline.encode_png(img)).decode() for img in current]}
 
 
@@ -414,6 +419,7 @@ if __name__ == "__main__":
     said = []
 
     def reader(ims, hint="", caption=""):
+        caption = " ".join(caption) if isinstance(caption, list) else caption
         said.append(caption)
         tag = {"id": "c1", "box": [0, 0, 0, 0], "label": "school hashtag", "kind": "caption", "observation": "a school",
                "removal_impact": "low", "suggested": "erase"}
@@ -422,7 +428,7 @@ if __name__ == "__main__":
     events = list(run([img], attack=reader, caption="First day! #haeoreum",
                       rewrite=lambda cap, details: cap.replace(" #haeoreum", "")))
     assert [e["caption"] for e in events if e["type"] == "caption"] == ["First day!"] and said[-1] == "First day!"
-    assert events[-1]["safe"] and events[-1]["caption"] == "First day!" and not events[-1]["hidden"]
+    assert events[-1]["safe"] and events[-1]["captions"] == ["First day!"] and not events[-1]["hidden"]
     assert events[-1]["images"][0] == base64.b64encode(pipeline.encode_png(img)).decode()
     assert plan(reader([img], caption="#haeoreum")) == ([], [reader([img], caption="#haeoreum")["inferences"][0]["ways"][0]])
 
