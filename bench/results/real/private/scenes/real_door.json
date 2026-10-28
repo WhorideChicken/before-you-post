@@ -1,0 +1,31 @@
+{
+ "id": "real_door",
+ "kind": "leak",
+ "secrets": [
+  "1203",
+  "별빛마을"
+ ],
+ "verified": [
+  "1203",
+  "별빛마을"
+ ],
+ "seconds": 23.1,
+ "exposure_before": {
+  "home_location": 4,
+  "work_or_school": 1
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:complex name sign:box:pixelate",
+  "pixelate:door number plate:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [
+  "1203"
+ ],
+ "changed_ours": 0.2641,
+ "survived_naive": [],
+ "changed_naive": 0.5632
+}

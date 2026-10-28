@@ -1,0 +1,31 @@
+{
+ "id": "real_cards",
+ "kind": "leak",
+ "secrets": [
+  "Hana Seo",
+  "48213"
+ ],
+ "verified": [
+  "Hana Seo",
+  "48213"
+ ],
+ "seconds": 23.5,
+ "exposure_before": {
+  "identity": 3,
+  "work_or_school": 3,
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:employee ID badge:box:pixelate",
+  "pixelate:employee ID badge:box:pixelate",
+  "pixelate:employee badge header:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.5799,
+ "survived_naive": [],
+ "changed_naive": 0.7232
+}

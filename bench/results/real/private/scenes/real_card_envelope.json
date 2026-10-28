@@ -1,0 +1,33 @@
+{
+ "id": "real_card_envelope",
+ "kind": "leak",
+ "secrets": [
+  "Hana Seo",
+  "48213",
+  "Lindenhof"
+ ],
+ "verified": [
+  "Hana Seo",
+  "48213",
+  "Lindenhof"
+ ],
+ "seconds": 18.8,
+ "exposure_before": {
+  "identity": 4,
+  "home_location": 4,
+  "work_or_school": 4,
+  "financial_or_id": 4
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "pixelate:employee ID badge:box:pixelate",
+  "pixelate:shipping address label:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.6332,
+ "survived_naive": [],
+ "changed_naive": 0.8599
+}

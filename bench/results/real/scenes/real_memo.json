@@ -1,0 +1,37 @@
+{
+ "id": "real_memo",
+ "kind": "leak",
+ "secrets": [
+  "riverton-labs.test",
+  "010-0000-2718",
+  "별빛로 12"
+ ],
+ "verified": [
+  "riverton-labs.test",
+  "010-0000-2718",
+  "별빛로 12"
+ ],
+ "seconds": 83.7,
+ "exposure_before": {
+  "contact": 4,
+  "routine": 4
+ },
+ "exposure_after": {
+  "routine": 2
+ },
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "replace:printed email line:box:muse-image",
+  "replace:printed phone number:box:muse-image",
+  "replace:printed address line:box:muse-image",
+  "replace:email address text:box:muse-image",
+  "replace:phone number text:box:muse-image",
+  "replace:meeting address text:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.0125,
+ "survived_naive": [],
+ "changed_naive": 0.3058
+}

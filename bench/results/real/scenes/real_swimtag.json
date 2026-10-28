@@ -1,0 +1,33 @@
+{
+ "id": "real_swimtag",
+ "kind": "leak",
+ "secrets": [
+  "Riverton Swim Club"
+ ],
+ "verified": [
+  "Riverton Swim Club"
+ ],
+ "seconds": 45.6,
+ "exposure_before": {
+  "routine": 3,
+  "current_location": 3,
+  "financial_or_id": 4
+ },
+ "exposure_after": {
+  "routine": 2,
+  "current_location": 1
+ },
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "replace:swim bag tag:box:muse-image",
+  "replace:shipping barcode label:sam:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.43,
+ "survived_naive": [
+  "Riverton Swim Club"
+ ],
+ "changed_naive": 0.7842
+}

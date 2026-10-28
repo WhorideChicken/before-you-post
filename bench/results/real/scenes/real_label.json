@@ -1,0 +1,34 @@
+{
+ "id": "real_label",
+ "kind": "leak",
+ "secrets": [
+  "박서윤",
+  "별빛로 12",
+  "010-0000-3141"
+ ],
+ "verified": [
+  "박서윤",
+  "별빛로 12",
+  "010-0000-3141"
+ ],
+ "seconds": 35.2,
+ "exposure_before": {
+  "home_location": 4,
+  "identity": 3,
+  "contact": 4,
+  "financial_or_id": 4,
+  "routine": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "replace:parcel shipping label:box:muse-image",
+  "replace:swim club tag:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.5661,
+ "survived_naive": [],
+ "changed_naive": 0.6902
+}

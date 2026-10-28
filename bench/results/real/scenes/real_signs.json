@@ -1,0 +1,34 @@
+{
+ "id": "real_signs",
+ "kind": "leak",
+ "secrets": [
+  "1203",
+  "별빛마을",
+  "Lindenhof"
+ ],
+ "verified": [
+  "1203",
+  "별빛마을",
+  "Lindenhof"
+ ],
+ "seconds": 41.2,
+ "exposure_before": {
+  "home_location": 4
+ },
+ "exposure_after": {
+  "work_or_school": 1
+ },
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "replace:apartment complex sign:box:muse-image",
+  "replace:street name sign:box:muse-image"
+ ],
+ "values_printed": [],
+ "survived_ours": [
+  "1203"
+ ],
+ "changed_ours": 0.2319,
+ "survived_naive": [],
+ "changed_naive": 0.4496
+}

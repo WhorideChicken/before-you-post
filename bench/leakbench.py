@@ -5,6 +5,7 @@ text in the original and in each cleaned version; a secret counts only if it was
 Baseline: one Muse Image call told to remove all personal information. Every value in scenes.json is fictional.
 
 Usage: uv run --env-file .env python -m bench.leakbench [--workers 4] [--only id,id] [--force] [--private]
+       [--set real]  (photos in bench/real/images, ground truth in bench/real/scenes.json)
 """
 import argparse
 import base64
@@ -37,7 +38,8 @@ PRICE = {"in": 1.25e-6, "out": 4.25e-6, "image": 0.01, "sam": 0.0025}
 
 usage = {"in": 0, "out": 0, "image": 0, "sam": 0}
 lock = threading.Lock()
-PRIVATE = False  # --private: Muse Spark Open attacker and on-server edits, results in results/private
+PRIVATE = False  # --private: Muse Spark Open attacker and on-server edits, results in .../private
+NOTES: list[str] = []  # what this run measures, printed under the summary title
 
 
 def track_usage():
@@ -179,8 +181,7 @@ def summarize(recs: list[dict]) -> str:
     with_secrets = [r for r in leaky if r["verified"]]
     lines = [
         f"# LeakBench results ({time.strftime('%Y-%m-%d')})", "",
-        *(["Private mode: Muse Spark Open on Baseten as the attacker, box masks, pixelation and inpainting on the "
-           "server. The verifier and the naive baseline still use Meta's API.", ""] if PRIVATE else []),
+        *[line for note in NOTES for line in (note, "")],
         f"{len(ok)} scenes scored ({len(leaky) - len(injections)} leak, {len(injections)} prompt injection, "
         f"{len(controls)} control), {len(recs) - len(ok)} errors. {verified} planted secrets were legible in the "
         "originals and are the ground truth below.", "",
@@ -222,16 +223,25 @@ def main():
     ap.add_argument("--only", default="")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--private", action="store_true")
+    ap.add_argument("--set", choices=["staged", "real"], default="staged")
     args = ap.parse_args()
     assert meta.client, "LeakBench needs MODEL_API_KEY (run with --env-file .env)"
+    global PRIVATE, RESULTS, IMAGES
+    scenes_file = ROOT / "scenes.json"
+    if args.set == "real":
+        IMAGES, RESULTS, scenes_file = ROOT / "real" / "images", RESULTS / "real", ROOT / "real" / "scenes.json"
+        NOTES.append("Real phone photos (iPhone, EXIF removed) of the printable props sheet shown on a monitor: real "
+                     "camera noise, moire, glare and angles, but not real-world scenes. Some show the sheet's "
+                     "'all values are fictional' footer. No controls in this set.")
     if args.private:
         assert meta.open_client, "--private needs OPEN_API_KEY"
-        global PRIVATE, RESULTS
         PRIVATE, RESULTS = True, RESULTS / "private"
+        NOTES.append("Private mode: Muse Spark Open on Baseten as the attacker, box masks, pixelation and inpainting "
+                     "on the server. The verifier and the naive baseline still use Meta's API.")
     track_usage()
     for d in (IMAGES, RESULTS / "scenes", RESULTS / "images"):
         d.mkdir(parents=True, exist_ok=True)
-    scenes = json.loads((ROOT / "scenes.json").read_text(encoding="utf-8"))
+    scenes = json.loads(scenes_file.read_text(encoding="utf-8"))
     if args.only:
         scenes = [s for s in scenes if s["id"] in args.only.split(",")]
     with ThreadPoolExecutor(args.workers) as pool:

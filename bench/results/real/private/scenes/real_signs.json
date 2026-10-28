@@ -1,0 +1,32 @@
+{
+ "id": "real_signs",
+ "kind": "leak",
+ "secrets": [
+  "1203",
+  "별빛마을",
+  "Lindenhof"
+ ],
+ "verified": [
+  "1203",
+  "별빛마을",
+  "Lindenhof"
+ ],
+ "seconds": 25.2,
+ "exposure_before": {
+  "home_location": 4,
+  "current_location": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 3,
+ "edits": [
+  "pixelate:complex signage panel:box:pixelate",
+  "pixelate:street name sign:box:pixelate",
+  "pixelate:door number sign:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.2987,
+ "survived_naive": [],
+ "changed_naive": 0.4405
+}

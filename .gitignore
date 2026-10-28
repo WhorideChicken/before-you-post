@@ -4,10 +4,10 @@ __pycache__/
 # private planning notes, not part of the submission
 PLAN.md
 # LeakBench outputs that are regenerated on every run
-bench/results/images/
-bench/results/private/images/
+bench/results/**/images/
 bench/results/run*.log
 # real-photo originals carry EXIF and GPS; only the stripped copies in bench/real/images are committed
 bench/real/*
 !bench/real/props.pdf
+!bench/real/scenes.json
 !bench/real/images/

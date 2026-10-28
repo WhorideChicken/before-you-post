@@ -1,0 +1,28 @@
+{
+ "id": "real_swimtag",
+ "kind": "leak",
+ "secrets": [
+  "Riverton Swim Club"
+ ],
+ "verified": [
+  "Riverton Swim Club"
+ ],
+ "seconds": 15.9,
+ "exposure_before": {
+  "work_or_school": 3,
+  "routine": 3
+ },
+ "exposure_after": {},
+ "safe": true,
+ "attacks": 2,
+ "edits": [
+  "pixelate:swimming bag tag:box:pixelate"
+ ],
+ "values_printed": [],
+ "survived_ours": [],
+ "changed_ours": 0.3666,
+ "survived_naive": [
+  "Riverton Swim Club"
+ ],
+ "changed_naive": 0.8155
+}
