@@ -23,10 +23,14 @@ MODEL_SIDE = 1536  # longest side sent to models; edits are composited back at f
 ATTACK_EFFORT = os.environ.get("ATTACK_EFFORT", "low")
 MAX_ATTACK_TOKENS = 12000  # a normal report is under 7k; caps the rare run that repeats itself until it times out
 # Private mode: the attacker is Muse Spark Open (open weights) on Baseten's Model API, which keeps no inputs or
-# outputs of synchronous requests. Nothing in that mode reaches Meta's API: masks and edits stay on this server.
+# outputs of synchronous requests. Nothing in that mode reaches Meta's API: edits run on this server, and masks come
+# from SAM 3 on our Modal GPU when SAM3_URL is set.
 OPEN_KEY = os.environ.get("OPEN_API_KEY")
 OPEN_BASE = os.environ.get("OPEN_API_BASE", "https://inference.baseten.co/v1")
 OPEN_MODEL = os.environ.get("OPEN_MODEL", "meta-models/muse-spark-open-1026")  # the hackathon keys only take this ID
+# Private mode's outlines: SAM 3 open weights on our own Modal GPU (app/sam3_modal.py). Without it, the box is the mask.
+SAM3_URL = os.environ.get("SAM3_URL")
+SAM3_KEY = os.environ.get("SAM3_KEY", "")
 
 if API_KEY or OPEN_KEY:
     from openai import OpenAI
@@ -359,6 +363,28 @@ def segment(img: np.ndarray, label: str, box) -> np.ndarray | None:
         left, top = int(r.bounds.left), int(r.bounds.top)
         region = placed[top:top + raster.shape[0], left:left + raster.shape[1]]
         region |= raster[:region.shape[0], :region.shape[1]]
+    h, w = img.shape[:2]
+    return cv2.resize(placed, (w, h), interpolation=cv2.INTER_LINEAR) > 0
+
+
+def segment_open(img: np.ndarray, label: str, box) -> np.ndarray | None:
+    """SAM 3 open weights on Modal, for private mode: the same contract as segment(), and the same rule for which
+    instances count (near the attacker's box)."""
+    if not SAM3_URL:
+        return None
+    small = _small(img)
+    sw, sh = small.size
+    body = json.dumps({"key": SAM3_KEY, "image": base64.b64encode(_png(small)).decode(), "label": label}).encode()
+    request = urllib.request.Request(SAM3_URL, body, {"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=150) as rsp:  # a cold start loads the weights first
+        instances = json.load(rsp)["instances"]
+    target = [box[0] * sw, box[1] * sh, box[2] * sw, box[3] * sh]
+    placed = np.zeros((sh, sw), np.uint8)
+    for inst in instances:
+        if _matches(target, inst["box"]):
+            placed |= np.asarray(Image.open(io.BytesIO(base64.b64decode(inst["mask"]))).convert("L"))[:sh, :sw] > 0
+    if not placed.any():
+        return None
     h, w = img.shape[:2]
     return cv2.resize(placed, (w, h), interpolation=cv2.INTER_LINEAR) > 0
 

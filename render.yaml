@@ -10,6 +10,10 @@ services:
         sync: false
       - key: OPEN_API_KEY  # private mode (Muse Spark Open on Baseten); leave empty to keep it off
         sync: false
+      - key: SAM3_URL  # private mode's outlines: SAM 3 on Modal (app/sam3_modal.py); empty = box masks
+        sync: false
+      - key: SAM3_KEY
+        sync: false
       - key: LIVE_CODE  # judges' code: live runs need it; give it in the submission. Samples never do
         sync: false
       - key: RUNS_PER_HOUR

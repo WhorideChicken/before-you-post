@@ -80,15 +80,15 @@ def widen(box: list[float]) -> list[float]:
 
 def _mask(img: np.ndarray, item: dict, private: bool = False) -> tuple[np.ndarray, str]:
     """SAM's outline when it finds the object, else the attacker's box. Not both: Spark's boxes can sit off the
-    object, and a generative edit composited into that stray area can paint in things that were never there."""
-    if private:
-        return pipeline.box_mask(img.shape, item["box"]), "box"
+    object, and a generative edit composited into that stray area can paint in things that were never there.
+    Private mode uses SAM 3 open weights on our Modal GPU when it is set up ("sam3"), else the box."""
+    source, segment = ("sam3", meta.segment_open) if private else ("sam", meta.segment)
     try:
-        mask = meta.segment(img, item["label"], item["box"])
+        mask = segment(img, item["label"], item["box"])
     except Exception:
-        log.exception("SAM segmentation failed, falling back to the box")
+        log.exception("segmentation failed, falling back to the box")
         mask = None
-    return (mask, "sam") if mask is not None and mask.any() else (pipeline.box_mask(img.shape, item["box"]), "box")
+    return (mask, source) if mask is not None and mask.any() else (pipeline.box_mask(img.shape, item["box"]), "box")
 
 
 def _generate(img: np.ndarray, item: dict) -> np.ndarray | None:
@@ -101,17 +101,34 @@ def _generate(img: np.ndarray, item: dict) -> np.ndarray | None:
         return None
 
 
-def apply_edits(img: np.ndarray, items: list[dict], private: bool = False) -> tuple[np.ndarray, list[dict], np.ndarray]:
+def _bounds(mask: np.ndarray) -> list[float]:
+    ys, xs = np.nonzero(mask)
+    h, w = mask.shape
+    return [round(float(v), 4) for v in (xs.min() / w, ys.min() / h, (xs.max() + 1) / w, (ys.max() + 1) / h)]
+
+
+def apply_edits(img: np.ndarray, items: list[dict], private: bool = False,
+                known: dict | None = None) -> tuple[np.ndarray, list[dict], np.ndarray]:
     """items: {label, box (0-1), action}. Model calls run in parallel on the same input; each result is
     composited only inside its own mask, so pixels outside every mask are untouched.
     private: nothing leaves this server. The attacker's box, grown wider since boxes can sit off the object, and
     pixelation or inpainting instead of SAM and Muse Image.
+    known: masks already made for these clue ids, {id: (mask, source)}.
     Returns the edited image, what was done, and the union of all masks."""
     pad = max(3, max(img.shape[:2]) // (60 if private else 200))
+    known = known or {}
     if private:
         items = [{**it, "action": "pixelate"} if it["action"] == "replace" else it for it in items]
+
+    def mask_for(it):
+        found = known.get(it.get("id"))
+        if found is None:
+            return _mask(img, it, private)
+        # SAM already looked; if it found nothing, the box is the mask, and in private mode that box may be widened.
+        return found if found[1] != "box" else (pipeline.box_mask(img.shape, it["box"]), "box")
+
     with ThreadPoolExecutor(8) as pool:
-        masks = list(pool.map(lambda it: _mask(img, it, private), items))
+        masks = list(pool.map(mask_for, items))
         generated = list(pool.map(lambda it: None if private else _generate(img, it), items))
     out, done, union = img, [], np.zeros(img.shape[:2], bool)
     for item, (mask, source), gen in zip(items, masks, generated):
@@ -163,6 +180,17 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
         exposure = meta.exposure(graph)
         before = before if before is not None else exposure
         yield {"type": "attack", "round": n, "graph": graph, "exposure": exposure}
+        known = {}
+        if n == 1 and (not private or meta.SAM3_URL):
+            # The attacker's boxes overlap the object at IoU 0.59 on average, 0.42 in private mode (bench/boxcal.py),
+            # so SAM outlines every clue now: the page moves each box onto its object, and the edits reuse the masks.
+            located = [c for c in graph["clues"] if c["box"]]
+            with ThreadPoolExecutor(8) as pool:
+                known = dict(zip([c["id"] for c in located],
+                                 pool.map(lambda c: _mask(imgs[c["photo"]], c, private), located)))
+            outlines = {i: _bounds(m) for i, (m, source) in known.items() if source != "box"}
+            if outlines:
+                yield {"type": "outlines", "model": "SAM 3" if private else "SAM 3.1", "outlines": outlines}
         ids, stuck = plan(graph, target)
 
         def inside(c):
@@ -196,12 +224,12 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
             for p, its in items.items():
                 img, area = imgs[p], np.zeros(imgs[p].shape[:2], bool)
                 for it in its:
-                    area |= pipeline.box_mask(img.shape, it["box"])
+                    area |= known[it["id"]][0] if it["id"] in known else pipeline.box_mask(img.shape, it["box"])
                 area = pipeline.grow(area, max(img.shape[:2]) // 30)
                 preview[p] = pipeline.encode_jpeg_b64(pipeline.composite(img, pipeline.pixelate(img), area))
             yield {"type": "preview", "images": preview}
         with ThreadPoolExecutor(len(items)) as pool:
-            results = dict(zip(items, pool.map(lambda p: apply_edits(current[p], items[p], private), items)))
+            results = dict(zip(items, pool.map(lambda p: apply_edits(current[p], items[p], private, known), items)))
         done = []
         for p, (out, did, mask) in results.items():
             current[p] = out
@@ -215,15 +243,21 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
 
 
 def _seen(clue: dict, tried: list[list[tuple]]) -> bool:
-    """Is this an object we already tried to edit in its photo? Its center is within one box size of that edit, and
-    the two overlap or are named alike ("door number plate", "apartment door number"). Closeness alone is not enough:
-    the window view next to an edited street sign is a different object."""
+    """Is this an object we already tried to edit in its photo? Its center is within one box size of that edit, it is
+    at most twice the size, and the two overlap or are named alike ("door number plate", "apartment door number").
+    Closeness alone is not enough: the window view next to an edited street sign is a different object, and so are
+    the backpack around an edited name tag ("backpack name label", "yellow backpack") and the lab benches behind
+    edited lab reports."""
+    def area(b):
+        return (b[2] - b[0]) * (b[3] - b[1])
+
     x0, y0, x1, y1 = clue["box"]
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     words = _words(clue["label"])
     for box, label in tried[clue["photo"]]:
         a, b, c, d = widen(box)
-        if a <= cx <= c and b <= cy <= d and (meta._iou(box, clue["box"]) >= 0.3 or words & _words(label)):
+        if (a <= cx <= c and b <= cy <= d and area(clue["box"]) <= 2 * area(box)
+                and (meta._iou(box, clue["box"]) >= 0.3 or words & _words(label))):
             return True
     return False
 
@@ -282,14 +316,16 @@ if __name__ == "__main__":
     assert done["images"][1] != base64.b64encode(pipeline.encode_png(imgs[1])).decode()
 
     # An object the agent set out to remove goes again if the edit missed it, even when the re-attack now rates it
-    # low. A neighbour with another name, and the same object where the edit did land, are left alone.
+    # low. A neighbour with another name, a bigger object around the edit that shares a word, and the same object
+    # where the edit did land, are left alone.
     def home(*clue_levels):
         return {"clues": [c for c, _ in clue_levels], "summary": "", "inferences": [{"category": "home_location",
                 "reasoning": "", "ways": [way([c["id"]], lvl) for c, lvl in clue_levels]}]}
     num = {**meta.MOCK_ATTACK["clues"][2], "id": "c1", "label": "house number"}
     moved = {**num, "box": [300, 40, 560, 240]}  # one box to the right: where it really is
     view = {**num, "id": "c2", "label": "window view", "box": [0, 0, 700, 600]}
-    rounds = iter([home((num, 3)), home((moved, 1), (view, 1)), home((num, 1))])
+    porch = {**num, "id": "c3", "label": "house front", "box": [0, 0, 390, 400]}  # 3x the number, overlapping it
+    rounds = iter([home((num, 3)), home((moved, 1), (view, 1), (porch, 1)), home((num, 1))])
     events = list(run([img], attack=lambda ims: meta.normalize(next(rounds, meta.MOCK_CLEAN))))
     edits = [e for e in events if e["type"] == "edits"]
     assert [[d["label"] for d in e["edits"]] for e in edits] == [["house number"], ["house number"]], edits
@@ -306,6 +342,20 @@ if __name__ == "__main__":
     done = list(run([img], attack=flaky()))[-1]
     log.disabled = False
     assert done["type"] == "done" and done["unverified"] and not done["safe"] and len(done["images"]) == 1
+
+    # Standard mode outlines every first-round clue once, right after the attack, and the edits reuse those masks.
+    seg, sam_calls = meta.segment, []
+
+    def fake_sam(im, label, box):
+        sam_calls.append(label)
+        return pipeline.box_mask(im.shape, [box[0] + 0.01, box[1], box[2], box[3]])
+    meta.segment = fake_sam
+    events = list(run([img], attack=meta.mock_attacker()))
+    meta.segment = seg
+    kinds = [e["type"] for e in events]
+    assert kinds[:4] == ["status", "attack", "outlines", "plan"], kinds
+    assert len(sam_calls) == len(meta.MOCK_ATTACK["clues"]) == len(events[2]["outlines"]), sam_calls
+    assert {d["mask"] for d in next(e for e in events if e["type"] == "edits")["edits"]} == {"sam"}
 
     # Private mode never calls SAM or Muse Image: box masks, "replace" becomes pixelation, and only a small "erase"
     # (a house number) is inpainted; the mock's large street sign would smear.
