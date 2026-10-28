@@ -111,6 +111,12 @@
   details.note p { margin-top: 6px; }
   .notice { padding: 10px 12px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
   .notice.warn { border-color: var(--warn); }
+  .opens { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 14px;
+           border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 7%, var(--card)); }
+  .opens .lock { flex: none; width: 26px; height: 26px; margin-top: 2px; color: var(--accent); }
+  .opens p { margin: 4px 0 0; }
+  .opens .cta { margin-top: 12px; }
+  .soon { font-weight: 400; color: var(--muted); }
 
   /* Run view: Stepper, sticky photo, Pixel Transition, report */
   #view { scroll-margin-top: 12px; }
@@ -336,8 +342,21 @@
     <p class="lede">One photo, or up to 20 from the same account, or your Instagram export: they are checked together,
       so details that are harmless alone but give you away in combination count too.</p>
     <div class="own locked" id="own-form">
-      <p class="notice" id="live-off" hidden>Checking your own photos opens for the judging period. Until then, the
-        samples above replay real runs of the agent, recorded as they happened.</p>
+      <div class="opens" id="live-off" hidden>
+        <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" fill="none"
+          stroke="currentColor" stroke-width="2"/><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/></svg>
+        <div>
+          <b>Checking your own photos opens for the judging period</b>
+          <p class="muted small">Every live check spends model credits, so it switches on when judging starts. Until then
+            the form below is a preview, and the samples replay real runs of the agent, recorded as they happened.</p>
+          <div class="cta">
+            <button class="btn primary spark" type="button" id="try-sample">Play a sample</button>
+            <a class="btn" href="https://youtu.be/HcLgyfB1kuc" target="_blank" rel="noopener">Watch the 3-minute demo</a>
+            <a class="btn" href="https://github.com/WhorideChicken/before-you-post#leakbench" target="_blank"
+              rel="noopener">How we measured it</a>
+          </div>
+        </div>
+      </div>
       <label class="code" id="code-wrap" hidden>
         <span><b>Judges' code</b><br><span class="muted small">It's in the hackathon submission. The samples above need
           no code.</span></span>
@@ -1170,13 +1189,24 @@ $("code").addEventListener("input", lockUpload);
 lockUpload();
 fetch("/api/status").then(r => r.json()).then(s => {
   server = s;
-  $("live-off").hidden = s.live;
+  if (!s.live) liveOff();
   $("code-wrap").hidden = !(s.live && s.code);
   $("private-wrap").hidden = !s.private;
   $("private-pill").hidden = !s.private;
   $("private").disabled = !s.standard;  // private mode is the only live mode on this server
   lockUpload();
-}).catch(() => { $("live-off").hidden = false; });
+}).catch(liveOff);
+
+// No live runs on this server yet: say so where people look for them, and point at what works now.
+function liveOff() {
+  $("live-off").hidden = false;
+  const [check, watch] = document.querySelectorAll(".hero .cta a");
+  check.classList.remove("primary");
+  watch.classList.add("primary");
+  check.before(watch);
+  check.append(el("span", { className: "soon", textContent: " · opens for judging" }));
+}
+$("try-sample").onclick = () => [...document.querySelectorAll(".samples button")].find(b => b.textContent.includes("First day"))?.click();
 
 // Photos shared from another app arrive through sw.js and wait on the device until Check is tapped.
 async function takeShared() {
