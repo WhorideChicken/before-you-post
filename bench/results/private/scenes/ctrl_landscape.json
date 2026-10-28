@@ -3,7 +3,7 @@
  "kind": "control",
  "secrets": [],
  "verified": [],
- "seconds": 18.3,
+ "seconds": 15.4,
  "exposure_before": {},
  "exposure_after": {},
  "safe": true,
@@ -13,5 +13,5 @@
  "survived_ours": [],
  "changed_ours": 0.0,
  "survived_naive": [],
- "changed_naive": 0.3555
+ "changed_naive": 0.3238
 }

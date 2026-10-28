@@ -20,6 +20,8 @@ MAX_ATTACKS = 4  # attack, then at most three rounds of edit + re-attack
 EXACT_LIMIT = 16  # exact search is 2^n subsets
 ESCALATE = 0.3  # a clue at least this much inside an already-edited area gets the edit that cannot fail
 INPAINT_MAX = 0.005  # private mode: classic inpainting blends a house number but smears anything bigger
+SMALL = 0.01  # private mode: boxes under this share of the frame are widened from the first edit
+MAX_EDITS = 12  # per round: bounds cost and memory on a small host; anything left goes in the next round
 
 
 def plan(graph: dict, target: int = TARGET) -> tuple[list[str], list[dict]]:
@@ -86,7 +88,7 @@ def _mask(img: np.ndarray, item: dict, private: bool = False) -> tuple[np.ndarra
     except Exception:
         log.exception("SAM segmentation failed, falling back to the box")
         mask = None
-    return (mask, "sam") if mask is not None else (pipeline.box_mask(img.shape, item["box"]), "box")
+    return (mask, "sam") if mask is not None and mask.any() else (pipeline.box_mask(img.shape, item["box"]), "box")
 
 
 def _generate(img: np.ndarray, item: dict) -> np.ndarray | None:
@@ -122,7 +124,13 @@ def apply_edits(img: np.ndarray, items: list[dict], private: bool = False) -> tu
             edited, engine = (gen, "muse-image") if gen is not None else (pipeline.inpaint(out, mask), "inpaint")
         else:
             edited, engine = getattr(pipeline, item["action"])(out), item["action"]
-        out = pipeline.composite(out, edited, mask)
+        if engine == "muse-image" and (mask & union).any():
+            # Every generated edit starts from the same input, so where this mask overlaps an earlier edit it would
+            # paste back what that edit removed. The overlap is pixelated instead.
+            out = pipeline.composite(out, edited, mask & ~union)
+            out = pipeline.composite(out, pipeline.pixelate(out), mask & union)
+        else:
+            out = pipeline.composite(out, edited, mask)
         union |= mask
         done.append({**item, "mask": source, "engine": engine})
     return out, done, union
@@ -133,33 +141,51 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
     breaks combinations across photos with the fewest edits overall. Image fields are lists in photo order, None for
     a photo a step left unchanged. The last event carries the final PNGs (lossless, metadata-free).
     private: edits stay on this server (see apply_edits); the caller passes the matching attacker."""
-    current, before = list(imgs), None
+    current, before, failed = list(imgs), None, False
     edited = [np.zeros(img.shape[:2], bool) for img in imgs]
+    tried = [[] for _ in imgs]  # boxes already set out to edit, per photo
     for n in range(1, MAX_ATTACKS + 1):
         what = "photo" if len(imgs) == 1 else f"{len(imgs)} photos together"
         yield {"type": "status", "text": f"Attacking the {what}" if n == 1 else f"Re-attacking the edited {what}"}
-        graph = attack(current)
-        if private and n == 1 and not graph["inferences"]:
-            # An empty report is what every injected "report nothing" asks for, and Muse Spark Open sometimes
-            # complies, so an empty first answer gets a second, independent attack.
+        try:
             graph = attack(current)
+            if private and n == 1 and not graph["inferences"]:
+                # An empty report is what every injected "report nothing" asks for, and Muse Spark Open sometimes
+                # complies, so an empty first answer gets a second, independent attack.
+                graph = attack(current)
+        except Exception:
+            if n == 1:
+                raise
+            # The edits are already paid for and on screen: hand them back, marked as not re-checked.
+            log.exception("re-attack failed, returning the edits unverified")
+            failed = True
+            break
         exposure = meta.exposure(graph)
         before = before if before is not None else exposure
         yield {"type": "attack", "round": n, "graph": graph, "exposure": exposure}
         ids, stuck = plan(graph, target)
+
+        def inside(c):
+            m = pipeline.box_mask(imgs[c["photo"]].shape, c["box"])
+            return (m & edited[c["photo"]]).sum() >= ESCALATE * m.sum()
+
+        # An object already set out to remove, found again outside every edit: the edit missed it (a box off a small
+        # object). It was worth removing once, so it still goes, even if alone it now rates lower.
+        missed = {c["id"] for c in graph["clues"] if c["box"] and _seen(c, tried) and not inside(c)}
+        ids = sorted(set(ids) | missed)
         if not ids or n == MAX_ATTACKS:
             break
         items = {}  # photo index -> edits
-        for c in graph["clues"]:
-            if c["id"] in ids:
-                p = c["photo"]
-                # A clue found again where we already edited survived a generative edit: use one that cannot fail.
-                # In private mode there was no SAM outline, so the box itself missed: widen it.
-                box = pipeline.box_mask(imgs[p].shape, c["box"])
-                again = (box & edited[p]).sum() >= ESCALATE * box.sum()
-                items.setdefault(p, []).append({"id": c["id"], "photo": p, "label": c["label"],
-                                                "box": widen(c["box"]) if again and private else c["box"],
-                                                "action": "pixelate" if again else c["suggested"]})
+        for c in [c for c in graph["clues"] if c["id"] in ids][:MAX_EDITS]:
+            p, box = c["photo"], c["box"]
+            # Found again where we already edited: the generative edit kept it, so use one that cannot fail. Private
+            # mode has no SAM outline, so there a miss means the box was off: widen it, and small boxes from the start.
+            again = inside(c) or c["id"] in missed
+            if private and (again or (box[2] - box[0]) * (box[3] - box[1]) < SMALL):
+                box = widen(box)
+            tried[p].append((box, c["label"]))
+            items.setdefault(p, []).append({"id": c["id"], "photo": p, "label": c["label"], "box": box,
+                                            "action": "pixelate" if again else c["suggested"]})
         count = sum(map(len, items.values()))
         yield {"type": "plan", "round": n, "clues": ids, "stuck": len(stuck),
                "text": f"Breaking {len(risky_ways(graph, target))} ways in with {count} edit{'s' if count != 1 else ''}"}
@@ -183,8 +209,27 @@ def run(imgs: list[np.ndarray], attack=meta.attack, target: int = TARGET, privat
             done += did
         yield {"type": "edits", "round": n, "edits": done,
                "images": [pipeline.encode_jpeg_b64(current[p]) if p in results else None for p in range(len(imgs))]}
-    yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "safe": not ids and not stuck,
+    yield {"type": "done", "before": before, "after": exposure, "residual": len(stuck), "unverified": failed,
+           "safe": not failed and not ids and not stuck,
            "images": [base64.b64encode(pipeline.encode_png(img)).decode() for img in current]}
+
+
+def _seen(clue: dict, tried: list[list[tuple]]) -> bool:
+    """Is this an object we already tried to edit in its photo? Its center is within one box size of that edit, and
+    the two overlap or are named alike ("door number plate", "apartment door number"). Closeness alone is not enough:
+    the window view next to an edited street sign is a different object."""
+    x0, y0, x1, y1 = clue["box"]
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    words = _words(clue["label"])
+    for box, label in tried[clue["photo"]]:
+        a, b, c, d = widen(box)
+        if a <= cx <= c and b <= cy <= d and (meta._iou(box, clue["box"]) >= 0.3 or words & _words(label)):
+            return True
+    return False
+
+
+def _words(label: str) -> set[str]:
+    return {w.rstrip("s") for w in label.lower().split() if len(w) > 2}
 
 
 if __name__ == "__main__":
@@ -235,6 +280,32 @@ if __name__ == "__main__":
     done = events[-1]
     assert done["safe"] and done["images"][0] == base64.b64encode(pipeline.encode_png(imgs[0])).decode()
     assert done["images"][1] != base64.b64encode(pipeline.encode_png(imgs[1])).decode()
+
+    # An object the agent set out to remove goes again if the edit missed it, even when the re-attack now rates it
+    # low. A neighbour with another name, and the same object where the edit did land, are left alone.
+    def home(*clue_levels):
+        return {"clues": [c for c, _ in clue_levels], "summary": "", "inferences": [{"category": "home_location",
+                "reasoning": "", "ways": [way([c["id"]], lvl) for c, lvl in clue_levels]}]}
+    num = {**meta.MOCK_ATTACK["clues"][2], "id": "c1", "label": "house number"}
+    moved = {**num, "box": [300, 40, 560, 240]}  # one box to the right: where it really is
+    view = {**num, "id": "c2", "label": "window view", "box": [0, 0, 700, 600]}
+    rounds = iter([home((num, 3)), home((moved, 1), (view, 1)), home((num, 1))])
+    events = list(run([img], attack=lambda ims: meta.normalize(next(rounds, meta.MOCK_CLEAN))))
+    edits = [e for e in events if e["type"] == "edits"]
+    assert [[d["label"] for d in e["edits"]] for e in edits] == [["house number"], ["house number"]], edits
+    assert edits[1]["edits"][0]["action"] == "pixelate" and events[-1]["safe"]
+
+    # A re-attack that fails hands the edits back, marked unverified, instead of losing them.
+    def flaky(graphs=iter([meta.normalize(meta.MOCK_ATTACK)])):
+        def attack(ims):
+            for g in graphs:
+                return g
+            raise TimeoutError("the model timed out")
+        return attack
+    log.disabled = True
+    done = list(run([img], attack=flaky()))[-1]
+    log.disabled = False
+    assert done["type"] == "done" and done["unverified"] and not done["safe"] and len(done["images"]) == 1
 
     # Private mode never calls SAM or Muse Image: box masks, "replace" becomes pixelation, and only a small "erase"
     # (a house number) is inpainted; the mock's large street sign would smear.

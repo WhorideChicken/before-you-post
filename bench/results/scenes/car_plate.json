@@ -7,11 +7,9 @@
  "verified": [
   "7KXR392"
  ],
- "seconds": 37.1,
+ "seconds": 18.3,
  "exposure_before": {
-  "financial_or_id": 4,
-  "home_location": 2,
-  "current_location": 2
+  "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
@@ -23,5 +21,5 @@
  "survived_ours": [],
  "changed_ours": 0.012,
  "survived_naive": [],
- "changed_naive": 0.331
+ "changed_naive": 0.2923
 }

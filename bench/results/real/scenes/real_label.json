@@ -11,24 +11,26 @@
   "별빛로 12",
   "010-0000-3141"
  ],
- "seconds": 35.2,
+ "seconds": 39.8,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
   "contact": 4,
   "financial_or_id": 4,
+  "other_people": 3,
   "routine": 3
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:parcel shipping label:box:muse-image",
-  "replace:swim club tag:box:muse-image"
+  "replace:shipping label:box:muse-image",
+  "replace:shipping barcode:sam:muse-image",
+  "replace:swim bag tag:box:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.5661,
+ "changed_ours": 0.5316,
  "survived_naive": [],
- "changed_naive": 0.6902
+ "changed_naive": 0.693
 }

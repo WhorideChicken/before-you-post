@@ -8,10 +8,9 @@
  ],
  "verified": [
   "김하늘",
-  "솔내로 27",
   "010-2345-6789"
  ],
- "seconds": 26.3,
+ "seconds": 24.8,
  "exposure_before": {
   "home_location": 4,
   "identity": 3,
@@ -27,7 +26,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0269,
+ "changed_ours": 0.0288,
  "survived_naive": [],
- "changed_naive": 0.1654
+ "changed_naive": 0.1814
 }

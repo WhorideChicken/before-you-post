@@ -9,24 +9,22 @@
   "Priya Raman",
   "20417735"
  ],
- "seconds": 18.6,
+ "seconds": 26.0,
  "exposure_before": {
-  "work_or_school": 4,
+  "work_or_school": 3,
   "identity": 4,
   "financial_or_id": 4
  },
- "exposure_after": {
-  "work_or_school": 1,
-  "identity": 1
- },
+ "exposure_after": {},
  "safe": true,
- "attacks": 2,
+ "attacks": 3,
  "edits": [
+  "pixelate:student ID card:box:pixelate",
   "pixelate:student ID card:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1398,
+ "changed_ours": 0.4407,
  "survived_naive": [],
- "changed_naive": 0.2024
+ "changed_naive": 0.2054
 }

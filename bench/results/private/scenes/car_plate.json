@@ -7,22 +7,22 @@
  "verified": [
   "7KXR392"
  ],
- "seconds": 14.2,
+ "seconds": 18.8,
  "exposure_before": {
   "home_location": 3,
-  "financial_or_id": 4,
-  "identity": 3
+  "identity": 4,
+  "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "pixelate:license plate:box:pixelate",
-  "pixelate:red hatchback car:box:pixelate"
+  "pixelate:car license plate:box:pixelate",
+  "pixelate:residential house exterior:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.3785,
+ "changed_ours": 0.4069,
  "survived_naive": [],
- "changed_naive": 0.2767
+ "changed_naive": 0.3296
 }

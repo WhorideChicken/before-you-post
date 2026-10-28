@@ -9,22 +9,25 @@
   "Hana Seo",
   "48213"
  ],
- "seconds": 43.9,
+ "seconds": 65.1,
  "exposure_before": {
-  "work_or_school": 3,
   "identity": 3,
+  "work_or_school": 3,
   "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
- "attacks": 2,
+ "attacks": 3,
  "edits": [
-  "replace:upper ID card:box:muse-image",
-  "replace:lower ID card:box:muse-image"
+  "replace:employee ID card:sam:muse-image",
+  "replace:employee ID card:sam:muse-image",
+  "pixelate:printed barcode strip:sam:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.3965,
- "survived_naive": [],
- "changed_naive": 0.7288
+ "changed_ours": 0.46,
+ "survived_naive": [
+  "48213"
+ ],
+ "changed_naive": 0.7279
 }

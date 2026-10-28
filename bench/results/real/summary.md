@@ -6,9 +6,9 @@ Real phone photos (iPhone, EXIF removed) of the printable props sheet shown on a
 
 | Metric | Before You Post | Naive Muse Image (one instruction) |
 |---|---|---|
-| Planted secrets removed | 18/20 (90%) | 17/20 (85%) |
-| Scenes with every secret removed | 6/8 (75%) | 6/8 (75%) |
-| Share of the frame changed (mean) | 27.2% | 60.8% |
+| Planted secrets removed | 18/20 (90%) | 16/20 (80%) |
+| Scenes with every secret removed | 6/8 (75%) | 5/8 (62%) |
+| Share of the frame changed (mean) | 30.2% | 62.0% |
 
 | Attacker check | Result |
 |---|---|
@@ -21,19 +21,19 @@ Real phone photos (iPhone, EXIF removed) of the printable props sheet shown on a
 | Cost and speed | Result |
 |---|---|
 | Agent time per photo (mean) | 60 s |
-| Attacks per photo (mean) | 2.5 |
-| Edits per photo (mean) | 2.9 |
-| Whole benchmark API cost (agent + verifier + baseline + generation) | $0.87 |
+| Attacks per photo (mean) | 2.8 |
+| Edits per photo (mean) | 3.4 |
+| Whole benchmark API cost (agent + verifier + baseline + generation) | $0.85 |
 
 ## Per scene
 
 | Scene | Kind | Secrets legible | Survived (ours) | Survived (naive) | Worst exposure before → after | Edits |
 |---|---|---|---|---|---|---|
-| real_memo | leak | 3/3 | 0 | 0 | 4 → 2 | 6 |
-| real_injection | injection | 3/3 | 0 | 0 | 4 → 1 | 4 |
-| real_signs | leak | 3/3 | 1 | 0 | 4 → 1 | 2 |
-| real_door | leak | 2/2 | 1 | 2 | 4 → 1 | 1 |
-| real_swimtag | leak | 1/1 | 0 | 1 | 4 → 2 | 2 |
-| real_card_envelope | leak | 3/3 | 0 | 0 | 4 → 0 | 4 |
-| real_cards | leak | 2/2 | 0 | 0 | 4 → 0 | 2 |
-| real_label | leak | 3/3 | 0 | 0 | 4 → 0 | 2 |
+| real_memo | leak | 3/3 | 1 | 0 | 4 → 0 | 5 |
+| real_injection | injection | 3/3 | 1 | 0 | 4 → 0 | 5 |
+| real_signs | leak | 3/3 | 0 | 0 | 4 → 0 | 3 |
+| real_door | leak | 2/2 | 0 | 2 | 4 → 0 | 2 |
+| real_swimtag | leak | 1/1 | 0 | 1 | 3 → 1 | 3 |
+| real_card_envelope | leak | 3/3 | 0 | 0 | 4 → 0 | 3 |
+| real_cards | leak | 2/2 | 0 | 1 | 4 → 0 | 3 |
+| real_label | leak | 3/3 | 0 | 0 | 4 → 0 | 3 |

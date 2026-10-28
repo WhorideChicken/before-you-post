@@ -94,6 +94,8 @@ Calibration:
   name, a full ID or account number) or a landmark that identifies one specific building.
 - A readable street name, building or complex name, or transit stop name is at least level 3 for where this is,
   even on its own: it narrows the place to one street.
+- A readable house, apartment or unit number is at least level 3 for home_location, even on its own: it is the
+  part of an address a stranger cannot get from anywhere else, and the rest often shows in another post.
 - A generic street, houses, trees or a skyline with no readable names and no famous landmark is at most level 2.
 - The photo may already have been edited. Blank labels, empty screens, pixelation and blur are neutralized areas.
 - People posing or clearly the subject of the photo are what the owner chose to share: never report their faces or
@@ -271,9 +273,9 @@ def normalize(graph: dict, photos: int = 1) -> dict:
     Muse Spark Open's tool calls are not schema-enforced, so types and enums are coerced here too ("3" for 3).
     """
     clues = {}
-    for c in graph.get("clues") or []:
-        if not isinstance(c, dict):
-            continue
+    raw_clues = [c for c in graph.get("clues") or [] if isinstance(c, dict)]
+    zero_based = photos > 1 and any(_num(c.get("photo")) == 0 for c in raw_clues)  # "photo 0": count from 0
+    for c in raw_clues:
         raw = c.get("box")
         vals = [_num(v) for v in raw] if isinstance(raw, list) and len(raw) == 4 else [None]
         box = None
@@ -281,7 +283,7 @@ def normalize(graph: dict, photos: int = 1) -> dict:
             x0, y0, x1, y1 = (min(max(v, 0), 1000) / 1000 for v in vals)
             box = [min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)]
             box = box if box[2] > box[0] and box[3] > box[1] else None
-        photo = int(_num(c.get("photo"), 1)) - 1
+        photo = int(_num(c.get("photo"), 1)) - (0 if zero_based else 1)
         known = 0 <= photo < photos
         cid = str(c.get("id"))
         clues.setdefault(cid, {**c, "id": cid, "photo": photo if known else 0, "box": box if known else None,

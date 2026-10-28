@@ -9,15 +9,16 @@
   "Okafor",
   "Q7XK2P"
  ],
- "seconds": 18.4,
+ "seconds": 18.5,
  "exposure_before": {
   "identity": 4,
-  "current_location": 3,
-  "contact": 4,
-  "routine": 3,
+  "current_location": 4,
+  "routine": 4,
   "financial_or_id": 4
  },
- "exposure_after": {},
+ "exposure_after": {
+  "identity": 1
+ },
  "safe": true,
  "attacks": 2,
  "edits": [
@@ -25,7 +26,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.1859,
+ "changed_ours": 0.1896,
  "survived_naive": [],
- "changed_naive": 0.37
+ "changed_naive": 0.3659
 }

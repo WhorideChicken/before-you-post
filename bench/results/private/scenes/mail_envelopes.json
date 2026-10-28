@@ -9,22 +9,23 @@
   "Sofia Marin",
   "88 Cedar Court"
  ],
- "seconds": 16.9,
+ "seconds": 16.3,
  "exposure_before": {
   "home_location": 4,
   "identity": 4,
-  "financial_or_id": 3
+  "financial_or_id": 2,
+  "contact": 4
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "pixelate:white envelope:box:pixelate",
-  "pixelate:account summary document:box:pixelate"
+  "pixelate:white envelope front:box:pixelate",
+  "pixelate:financial statement paper:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0808,
+ "changed_ours": 0.0826,
  "survived_naive": [],
- "changed_naive": 0.1691
+ "changed_naive": 0.1598
 }

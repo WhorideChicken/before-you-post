@@ -11,12 +11,12 @@
   "310 Oak Avenue",
   "4821"
  ],
- "seconds": 17.6,
+ "seconds": 18.3,
  "exposure_before": {
   "current_location": 4,
   "routine": 3,
   "financial_or_id": 3,
-  "other_people": 2
+  "other_people": 1
  },
  "exposure_after": {},
  "safe": true,
@@ -27,7 +27,9 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.121,
- "survived_naive": [],
- "changed_naive": 0.4299
+ "changed_ours": 0.1283,
+ "survived_naive": [
+  "Blue Fern"
+ ],
+ "changed_naive": 0.4553
 }

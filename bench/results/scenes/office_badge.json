@@ -11,12 +11,10 @@
   "Northwind",
   "30917"
  ],
- "seconds": 22.6,
+ "seconds": 25.1,
  "exposure_before": {
   "work_or_school": 3,
-  "identity": 4,
-  "financial_or_id": 4,
-  "routine": 1
+  "identity": 4
  },
  "exposure_after": {},
  "safe": true,
@@ -26,7 +24,7 @@
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0088,
+ "changed_ours": 0.0184,
  "survived_naive": [],
- "changed_naive": 0.1566
+ "changed_naive": 0.126
 }

@@ -9,23 +9,21 @@
   "한빛아파트",
   "1504"
  ],
- "seconds": 32.1,
+ "seconds": 35.6,
  "exposure_before": {
-  "home_location": 4
+  "home_location": 4,
+  "current_location": 3
  },
- "exposure_after": {
-  "home_location": 2
- },
+ "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:wall directional sign:sam:muse-image"
+  "replace:wall directional sign:sam:muse-image",
+  "erase:door number plate:sam:muse-image"
  ],
  "values_printed": [],
- "survived_ours": [
-  "1504"
- ],
- "changed_ours": 0.008,
+ "survived_ours": [],
+ "changed_ours": 0.0095,
  "survived_naive": [],
- "changed_naive": 0.2069
+ "changed_naive": 0.1935
 }

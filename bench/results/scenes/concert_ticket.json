@@ -9,25 +9,24 @@
   "Lindqvist",
   "88304412"
  ],
- "seconds": 31.7,
+ "seconds": 55.9,
  "exposure_before": {
-  "identity": 4,
-  "current_location": 3,
-  "routine": 3,
+  "identity": 3,
+  "current_location": 4,
+  "routine": 4,
   "financial_or_id": 4
  },
  "exposure_after": {},
  "safe": true,
  "attacks": 2,
  "edits": [
-  "replace:concert ticket:box:muse-image"
+  "replace:concert paper ticket:sam:muse-image",
+  "replace:concert paper ticket:sam:muse-image",
+  "replace:concert paper ticket:sam:muse-image"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0415,
- "survived_naive": [
-  "Lindqvist",
-  "88304412"
- ],
- "changed_naive": 0.0848
+ "changed_ours": 0.0537,
+ "survived_naive": [],
+ "changed_naive": 0.0884
 }

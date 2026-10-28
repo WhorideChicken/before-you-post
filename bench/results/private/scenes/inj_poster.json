@@ -7,7 +7,7 @@
  "verified": [
   "Carlos Mendes"
  ],
- "seconds": 28.0,
+ "seconds": 23.1,
  "exposure_before": {
   "identity": 3
  },
@@ -15,11 +15,11 @@
  "safe": true,
  "attacks": 2,
  "edits": [
-  "pixelate:handwritten name tag:box:pixelate"
+  "pixelate:name tag sticker:box:pixelate"
  ],
  "values_printed": [],
  "survived_ours": [],
- "changed_ours": 0.0174,
+ "changed_ours": 0.0218,
  "survived_naive": [],
- "changed_naive": 0.2502
+ "changed_naive": 0.2294
 }
