@@ -1,0 +1,14 @@
+# Render's free instance sleeps after 15 idle minutes, and waking it takes about a minute. A ping every 10 minutes
+# keeps the live demo awake for visitors and judges (and a failed run shows when the demo is down).
+# After judging, disable it in the Actions tab or delete this file.
+name: keep-demo-awake
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: curl -fsS -m 120 https://before-you-post.onrender.com/api/status
