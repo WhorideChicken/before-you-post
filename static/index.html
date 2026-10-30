@@ -87,7 +87,20 @@
   .spot:hover::after, .spot:focus-within::after { opacity: 1; }
 
   /* Upload */
-  .own { display: grid; gap: 12px; margin-top: 16px; max-width: 640px; }
+  .own { display: grid; gap: 12px; margin-top: 16px; }
+  .own-cols, .own-main, .own-side { display: grid; gap: 12px; align-content: start; }
+  .preview-tag { margin: 6px 0 -2px; font: 600 12px ui-monospace, Consolas, monospace; letter-spacing: .12em;
+                 text-transform: uppercase; color: var(--muted); }
+  #live-off[hidden] ~ .preview-tag { display: none; }
+  .keep .gets { margin: 8px 0 0; padding-left: 18px; list-style: disc; color: var(--muted); font-size: 14px; }
+  .gets li + li { margin-top: 4px; }
+  .own-side .keep { margin-top: 0; }
+  @media (min-width: 900px) {
+    .own-cols { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+    .opens { align-items: center; }
+    .opens .body { display: flex; gap: 24px; align-items: center; justify-content: space-between; }
+    .opens .cta { flex: none; margin-top: 0; }
+  }
   .drop { display: grid; gap: 4px; place-items: center; text-align: center; padding: 30px 16px; border: 2px dashed var(--line); border-radius: 14px; background: var(--card);
           cursor: pointer; transition: border-color .2s, background .2s; }
   .drop:hover, .drop.over { border-color: var(--accent); }
@@ -102,7 +115,7 @@
   .switch input:checked + .track::after { transform: translateX(16px); }
   .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
   .switch input:disabled + .track { opacity: .6; }
-  .own.locked .drop, .own.locked .switch, .own.locked #shared, .own.locked .capin, .own.locked .import { opacity: .45; filter: grayscale(1); pointer-events: none; }
+  .own.locked .drop, .own.locked .switch, .own.locked #shared, .own.locked .capin, .own.locked .import { opacity: .55; filter: grayscale(1); pointer-events: none; }
   .code { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px;
           border: 1px solid var(--accent); border-radius: 12px; background: var(--card); }
   .code input { flex: 0 1 200px; font: 600 16px ui-monospace, Consolas, monospace; padding: 9px 12px; border-radius: 8px;
@@ -345,10 +358,13 @@
       <div class="opens" id="live-off" hidden>
         <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" fill="none"
           stroke="currentColor" stroke-width="2"/><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/></svg>
-        <div>
-          <b>Checking your own photos opens for the judging period</b>
-          <p class="muted small">Every live check spends model credits, so it switches on when judging starts. Until then
-            the form below is a preview, and the samples replay real runs of the agent, recorded as they happened.</p>
+        <div class="body">
+          <div>
+            <b>Checking your own photos opens for the judging period</b>
+            <p class="muted small">Every live check spends model credits, so it switches on when judging starts. Until
+              then the form below is a preview, and the samples replay real runs of the agent, recorded as they
+              happened.</p>
+          </div>
           <div class="cta">
             <button class="btn primary spark" type="button" id="try-sample">Play a sample</button>
             <a class="btn" href="https://youtu.be/HcLgyfB1kuc" target="_blank" rel="noopener">Watch the 3-minute demo</a>
@@ -362,6 +378,9 @@
           no code.</span></span>
         <input id="code" type="text" autocomplete="off" spellcheck="false" aria-label="Judges' code">
       </label>
+      <p class="preview-tag">Preview: what opens for judging</p>
+      <div class="own-cols">
+      <div class="own-main">
       <label class="capin">
         <span><b>Caption</b> <span class="muted small">optional: what you will post with the photos. It is checked
           with them, since a caption often names what the photo hides.</span></span>
@@ -379,6 +398,17 @@
         <span class="muted small">Read on your device. Only the photos and captions of your latest 20 posts are sent,
           and they are checked as one account.</span>
       </div>
+      </div>
+      <div class="own-side">
+      <div class="keep">
+        <b>What you get back</b>
+        <ul class="gets">
+          <li>A safe copy: edits only where needed, PNG with no EXIF or GPS</li>
+          <li>What a stranger could learn from it, and how precisely</li>
+          <li>Your caption, without the details it gives away</li>
+          <li>Everything that was hidden, to keep whatever you choose</li>
+        </ul>
+      </div>
       <label class="switch" id="private-wrap" hidden>
         <input type="checkbox" id="private" role="switch" checked><span class="track" aria-hidden="true"></span>
         <span><b>Private mode</b><br><span class="muted small">Nothing goes to Meta's API: Muse Spark Open, Meta's open-weight
@@ -392,6 +422,8 @@
           prefer staged photos there, or private mode. The safe copy is a PNG with no EXIF or GPS data. Live runs are rate
           limited and run one at a time.</p>
       </details>
+      </div>
+      </div>
     </div>
   </section>
 </main>
