@@ -1,6 +1,7 @@
-# Render's free instance sleeps after 15 idle minutes, and waking it takes about a minute. A ping every 10 minutes
-# keeps the live demo awake for visitors and judges (and a failed run shows when the demo is down).
-# After judging, disable it in the Actions tab or delete this file.
+# Render's free instance sleeps after 15 idle minutes, and waking it takes about a minute. This pings the live demo,
+# and a failed run shows when it is down. GitHub runs scheduled jobs late on quiet repositories (hours apart on the
+# first day, not every 10 minutes), so an external monitor every 5 minutes does the real keeping awake; this is the
+# backup. After judging, disable it in the Actions tab or delete this file.
 name: keep-demo-awake
 on:
   schedule:
