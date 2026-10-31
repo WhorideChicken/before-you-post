@@ -417,7 +417,8 @@
       </label>
       <details class="note">
         <summary>What happens to your photo</summary>
-        <p class="muted small">This site stores nothing. In standard mode the photo goes to the Meta Model API, which
+        <p class="muted small">Each photo is redrawn on your device before upload, so its GPS and other EXIF data
+          never leave it. This site stores nothing. In standard mode the photo goes to the Meta Model API, which
           during the hackathon runs on free credits under which Meta may use submitted content for product improvement:
           prefer staged photos there, or private mode. The safe copy is a PNG with no EXIF or GPS data. Live runs are rate
           limited and run one at a time.</p>
@@ -830,7 +831,7 @@ async function handle(e) {
     if (e.private) notes.push("Private mode: Muse Spark Open on Baseten finds the clues, and masks and edits run on this server. Nothing is sent to Meta's API.");
     privateRun = !!e.private;
     if (originals.length > 1) notes.push(`${originals.length} photos from one account: the attacker sees them all at once, so details that are harmless alone but give you away together count too.`);
-    e.metadata.forEach((m, i) => m.gps && notes.push(`${originals.length > 1 ? `Photo ${i + 1}` : "This file"} has GPS location data. The safe copy never includes it.`));
+    e.metadata.forEach((m, i) => m.gps && notes.push(`${originals.length > 1 ? `Photo ${i + 1}` : "This file"} had GPS location data. ${m.here ? "It was removed on this device, before the upload." : "The safe copy never includes it."}`));
     if (notes.length) log("Before anything else", notes);
     step("attack", "active", privateRun ? "Muse Spark Open" : "Muse Spark");
     captionsWas = e.captions || (e.caption ? [e.caption] : []);
@@ -921,6 +922,7 @@ async function handle(e) {
     status(e.unverified ? "Edited, but the re-check did not finish, so this copy is not verified. Check it yourself before posting."
          : e.doubt ? "Not verified: a note in the photo seems to have talked the attacker out of reporting contact details that a plain text check read. Check the photo yourself."
          : e.safe ? "Done. Nothing specific about you is visible any more. GPS and other file metadata are removed too."
+           + (e.before.home_location || e.before.current_location ? " Plain scenery stays, so someone who geolocates photos may still find the area." : "")
          : `Done, but some exposure remains ("${LEVEL[worst]}"). Open the agent trace for details.`, !e.safe);
   } else if (e.type === "error") {
     clearInterval(timer);
@@ -1085,12 +1087,29 @@ async function importInstagram(file) {
   check(files, latest.map(p => p.caption));
 }
 
-// More than six photos go up shrunk to the size the server would use anyway, so twenty fit in one upload.
-async function shrink(file) {
-  const bitmap = await createImageBitmap(file), scale = Math.min(1, 1536 / Math.max(bitmap.width, bitmap.height));
+// Every photo is redrawn here before it goes up, at the size the server would use anyway (smaller for more than six,
+// so twenty fit in one upload). The copy has no EXIF, so GPS never leaves this device; whether it had any is read first.
+async function clean(file, side) {
+  let gps = false;
+  try { gps = gpsIn(new DataView(await file.slice(0, 1 << 17).arrayBuffer())); } catch {}
+  const bitmap = await createImageBitmap(file), scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
   const canvas = el("canvas", { width: Math.round(bitmap.width * scale), height: Math.round(bitmap.height * scale) });
   canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return new File([await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.9))], file.name, { type: "image/jpeg" });
+  const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.95));
+  return { file: new File([blob], file.name, { type: "image/jpeg" }), gps };
+}
+
+// Whether a JPEG's EXIF has GPS data: a non-empty GPS directory (tag 0x8825), as the server would read it.
+function gpsIn(v) {
+  if (v.getUint16(0) !== 0xFFD8) return false;
+  for (let p = 2; v.getUint8(p) === 0xFF && v.getUint8(p + 1) !== 0xDA; p += 2 + v.getUint16(p + 2)) {
+    if (v.getUint8(p + 1) !== 0xE1 || v.getUint32(p + 4) !== 0x45786966) continue;  // APP1 "Exif"
+    const t = p + 10, le = v.getUint16(t) === 0x4949, ifd = t + v.getUint32(t + 4, le);
+    for (let i = 0, e = ifd + 2; i < v.getUint16(ifd, le); i++, e += 12)
+      if (v.getUint16(e, le) === 0x8825) return v.getUint16(t + v.getUint32(e + 8, le), le) > 0;
+    return false;
+  }
+  return false;
 }
 
 let running = false, server = { live: false, code: false };
@@ -1197,9 +1216,12 @@ async function check(files, captions = null) {
   files = [...files].filter(f => f.type.startsWith("image/"));
   if (!files.length) return;
   if (files.length > 20) return status("Pick at most 20 photos from one account.", true);
-  const sent = files.length > 6 ? await Promise.all(files.map(shrink)) : files;
+  const side = files.length > 6 ? 1536 : 2048;
+  // A photo this browser cannot redraw goes up as it is; the server still reads and drops its metadata.
+  const sent = await Promise.all(files.map(f => clean(f, side).catch(() => ({ file: f, gps: false }))));
   const body = new FormData();
-  sent.forEach(f => body.append("photos", f));
+  sent.forEach(s => body.append("photos", s.file));
+  body.append("gps", JSON.stringify(sent.map(s => s.gps)));
   body.append("private", !$("private-wrap").hidden && $("private").checked);
   body.append("code", $("code").value.trim());
   if (captions) body.append("captions", JSON.stringify(captions));

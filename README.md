@@ -138,7 +138,7 @@ Open http://localhost:8000. The sample gallery replays recorded runs and needs n
 | `LIVE_CODE` | Live runs need this code (given to judges in the submission); the samples never do |
 | `RUNS_PER_HOUR`, `RUNS_PER_DAY` | Live run limits per visitor and for the whole site (defaults 4 and 30) |
 
-Live runs take JPEG, PNG or WebP up to 20 MB each, up to six at once, and run one at a time per server: the demo host
+Live runs take JPEG, PNG or WebP up to 20 MB each, up to 20 at once, and run one at a time per server: the demo host
 has 512 MB. Deploy with the [render.yaml](render.yaml) blueprint (Docker); set the keys as secrets there.
 
 Self-checks: `uv run python -m app.pipeline`, `uv run python -m app.meta`, `uv run python -m app.agent`.
@@ -319,6 +319,17 @@ Every fix below came from a miss in a run whose summary is kept in [bench/result
 
 - This site stores nothing; photos live in memory for one request. In standard mode they go to the Meta Model API
   (free hackathon credits: Meta may use submitted content), so test with staged photos or private mode.
+- The page redraws each photo before upload, so its GPS and other EXIF data never leave the device. The pixels still
+  do: it is not an on-device tool. Private mode reads `OPEN_API_BASE`, so it can point at any OpenAI-compatible server
+  running Muse Spark Open, your own included; we have only run it on Baseten.
+- It removes what pins a photo to one place or person: house numbers, street and building names, names on mail,
+  plates, IDs. Plain scenery (a generic street, trees, a skyline) counts as city-level and stays, since hiding it means
+  repainting most of the photo. A practised geolocator (GeoGuessr, OSINT) can often still find the area, and with
+  street-level imagery sometimes the street; the result says so when the photo showed where it was taken.
+- Faces of the people you chose to photograph stay: they are the point of the photo, and a blurred face does not hide
+  someone who is recognised by context. Bystanders' faces count as clues.
+- Removed details are blanked or blended in, never swapped for invented ones: a made-up house number or name could
+  point at someone real.
 - The attacker is told never to print personal values, and LeakBench checks that it doesn't, but that is a prompt
   rule, not a filter. Its descriptions are shown as plain text, never as HTML.
 - "Verified" is the agent's own judgment. Landmarks, faces and other non-text clues are attacked but not scored by

@@ -103,12 +103,13 @@ def status():
 
 @app.post("/api/run")
 async def run(request: Request, photos: list[UploadFile] = File(...), private: bool = Form(False),
-              code: str = Form(""), caption: str = Form(""), captions: str = Form("")):
+              code: str = Form(""), caption: str = Form(""), captions: str = Form(""), gps: str = Form("[]")):
     """Stream the agent's progress as NDJSON: attack, plan, edits, re-attack, done (with the final PNGs).
     Several photos are scanned as one account: attacked together, so combinations across them count.
     private: Muse Spark Open finds the clues and every edit runs here; nothing goes to Meta's API.
     caption: the text that will be posted with the photos; it is attacked with them and rewritten if it gives away
-    what the edits hide. captions: a JSON list, one per photo, instead (an imported Instagram export)."""
+    what the edits hide. captions: a JSON list, one per photo, instead (an imported Instagram export).
+    gps: a JSON list of booleans, one per photo: the page found GPS data and removed it before the upload."""
     if not (PRIVATE if private else STANDARD):
         raise HTTPException(503, "This mode is switched off right now. The sample photos still work.")
     # ponytail: no lockout on wrong codes; use a long random code, since each guess is a full upload anyway.
@@ -121,12 +122,19 @@ async def run(request: Request, photos: list[UploadFile] = File(...), private: b
         assert isinstance(texts, list) and len(texts) <= len(photos) and all(isinstance(t, str) for t in texts)
     except (ValueError, AssertionError):
         raise HTTPException(400, "captions must be a JSON list of strings, one per photo")
+    try:
+        removed = json.loads(gps)
+        assert isinstance(removed, list) and len(removed) <= len(photos) and all(isinstance(g, bool) for g in removed)
+    except (ValueError, AssertionError):
+        raise HTTPException(400, "gps must be a JSON list of booleans, one per photo")
     if any(len(t) > MAX_CAPTION for t in texts):
         raise HTTPException(413, f"Captions can be at most {MAX_CAPTION} characters, like Instagram's.")
     allow_live_run(request)
     try:
         side = MAX_SIDE if len(photos) <= meta.MAX_TOGETHER else LARGE_SIDE
         loaded = [await read_image(p, side) for p in photos]
+        for (_, m), here in zip(loaded, removed):
+            m.update(gps=m["gps"] or here, here=here)
     except BaseException:
         release_run()
         raise
