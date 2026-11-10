@@ -360,10 +360,11 @@
           stroke="currentColor" stroke-width="2"/><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/></svg>
         <div class="body">
           <div>
-            <b>Checking your own photos opens for the judging period</b>
-            <p class="muted small">Every live check spends model credits, so it switches on when judging starts. Until
-              then the form below is a preview, and the samples replay real runs of the agent, recorded as they
-              happened.</p>
+            <b>Checking your own photos was open for the judging period</b>
+            <p class="muted small">Every live check spends model credits, so live checks ran only while the hackathon
+              was judged. The form below is a preview, and the samples replay real runs of the agent, recorded as they
+              happened. To check your own photos, <a href="https://github.com/WhorideChicken/before-you-post#run-it"
+              target="_blank" rel="noopener">run it with your own keys</a>.</p>
           </div>
           <div class="cta">
             <button class="btn primary spark" type="button" id="try-sample">Play a sample</button>
@@ -378,7 +379,7 @@
           no code.</span></span>
         <input id="code" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Judges' code">
       </label>
-      <p class="preview-tag">Preview: what opens for judging</p>
+      <p class="preview-tag">Preview: what judges could run</p>
       <div class="own-cols">
       <div class="own-main">
       <label class="capin">
@@ -1251,14 +1252,14 @@ fetch("/api/status").then(r => r.json()).then(s => {
   lockUpload();
 }).catch(liveOff);
 
-// No live runs on this server yet: say so where people look for them, and point at what works now.
+// No live runs on this server: say so where people look for them, and point at what works now.
 function liveOff() {
   $("live-off").hidden = false;
   const [check, watch] = document.querySelectorAll(".hero .cta a");
   check.classList.remove("primary");
   watch.classList.add("primary");
   check.before(watch);
-  check.append(el("span", { className: "soon", textContent: " · opens for judging" }));
+  check.append(el("span", { className: "soon", textContent: " · closed after judging" }));
 }
 $("try-sample").onclick = () => [...document.querySelectorAll(".samples button")].find(b => b.textContent.includes("First day"))?.click();
 

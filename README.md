@@ -5,8 +5,8 @@ edits that break every way to find you, makes them, and attacks again to check. 
 learn and how precisely, but is told never to print the names, addresses or numbers themselves.
 
 **Live demo: [before-you-post.onrender.com](https://before-you-post.onrender.com)** · **[3-minute video](https://youtu.be/HcLgyfB1kuc)**. The gallery replays recorded runs
-of the real agent; checking your own photos opens during judging. The free host sleeps when idle, so the first visit
-can take about a minute.
+of the real agent; checking your own photos was open during judging (Nov 5–8, 2026), and now runs with your own keys
+(see [Run it](#run-it)). The free host sleeps when idle, so the first visit can take about a minute.
 
 | Before | After |
 |---|---|
